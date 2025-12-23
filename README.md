@@ -1,0 +1,2 @@
+# ShootStar
+A demo game.
