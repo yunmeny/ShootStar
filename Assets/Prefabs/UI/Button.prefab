@@ -160,9 +160,15 @@ MonoBehaviour:
   selectSFX:
     clip: {fileID: 8300000, guid: dc641f65cf098b14ca02ef2fb5e71102, type: 3}
     volume: 2
+    track: 0
+    loop: 0
+    force: 1
   submitSFX:
     clip: {fileID: 8300000, guid: 0b225f85e360f3e449af6df12ff5e0ec, type: 3}
     volume: 2
+    track: 0
+    loop: 0
+    force: 1
 --- !u!1 &4535052809280840889
 GameObject:
   m_ObjectHideFlags: 0

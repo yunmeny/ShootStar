@@ -188,7 +188,7 @@ public class AudioManager : PersistentSingleton<AudioManager>
     }
 }
 
-[System.Serializable]
+[Serializable]
 public class AudioData
 {
     public AudioClip clip;

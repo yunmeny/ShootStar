@@ -4,10 +4,10 @@ Shader "Custom/SDFFieldInteraction"
     {
         // 暴露可调整参数，方便在Inspector中修改
         _Position ("Position", Vector) = (0, 0, 0, 0)
-        _CircleRadius ("Circle Radius", Float) = 0.1
+        _CircleRadius ("Circle Radius", Range(0,1)) = 0.1
         _BoxSize ("Box Half Size (X/Y)", Vector) = (0.5, 0.25, 0, 0)
         _BoxRound ("Box Rounded Radius", Vector) = (0, 0, 0, 0)
-        _Smoothness ("Smooth Intersection K", Float) = 0.1
+        _Smoothness ("Smooth Intersection K", Range(0,1)) = 0.1
         _Color ("Tint Color", Color) = (1, 0, 0, 1)
     }
 

@@ -113,3 +113,15 @@ void sdRoundedCross_float(float2 p, float h, out float d)
                 dot(p_local - float2(1.0, 0.0), p_local - float2(1.0, 0.0))
             ));
 }
+
+// 菱形
+void sdRhombus_float(float2 p, float2 b, out float d)
+{
+    b.y = -b.y;
+    p = abs(p);
+    
+    float h = clamp( (dot(b, p) + b.y * b.y) / dot(b, b), 0.0, 1.0 );
+    p -= b * float2(h, h - 1.0);
+    
+    d = length(p) * sign(p.x);
+}

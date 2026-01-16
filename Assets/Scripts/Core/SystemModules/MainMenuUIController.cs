@@ -1,12 +1,14 @@
 using Core.UI;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Core.SystemModules
 {
     public class MainMenuUIController : MonoBehaviour
     {
-        [SerializeField] private Button startButton;
+        [SerializeField] private Button storyButton;
+        [SerializeField] private Button endlessButton;
         [SerializeField] private Button optionButton;
         [SerializeField] private Button exitButton;
         [SerializeField] private Canvas mainMenuCanvas;
@@ -15,14 +17,15 @@ namespace Core.SystemModules
         {
             Time.timeScale = 1;
             GameManager.GameState = GameState.Start;
-            UIInput.Instance.SelectUI(startButton);
+            UIInput.Instance.SelectUI(storyButton);
         }
     
         private void OnEnable()
         {
-            ButtonPressedState.ButtonFunctionTable.Add(startButton, OnStartButtonClick);
-            ButtonPressedState.ButtonFunctionTable.Add(optionButton, OptionButtonClick);
-            ButtonPressedState.ButtonFunctionTable.Add(exitButton, ExitButtonClick);
+            ButtonPressedState.ButtonFunctionTable.Add(storyButton, OnStoryButtonClick);
+            ButtonPressedState.ButtonFunctionTable.Add(endlessButton, OnEndlessButtonClick);
+            ButtonPressedState.ButtonFunctionTable.Add(optionButton, OnOptionButtonClick);
+            ButtonPressedState.ButtonFunctionTable.Add(exitButton, OnExitButtonClick);
         }
 
         private void OnDisable()
@@ -30,24 +33,29 @@ namespace Core.SystemModules
             ButtonPressedState.ButtonFunctionTable.Clear();
         }
 
-        void OnStartButtonClick()
+        void OnStoryButtonClick()
         {
             mainMenuCanvas.enabled = false;
             SceneLoader.Instance.LoadGamePlayScene();
         }
+
+        void OnEndlessButtonClick()
+        {
+            // TODO: 实现无尽模式
+        }
     
-        void OptionButtonClick()
+        void OnOptionButtonClick()
         {
             mainMenuCanvas.enabled = false;
             SceneLoader.Instance.LoadOptionsScene();
         }
 
-        void ExitButtonClick()
+        void OnExitButtonClick()
         {
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
-        Application.Quit();
+            Application.Quit();
 #endif
         }
     }
