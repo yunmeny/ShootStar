@@ -26,13 +26,13 @@ namespace Core.UI
         void OnEnable()
         {
             GameManager.onGameOver += OnGameOver;
-            playerInput.onConfirmGameover += OnConfirmGameOver;
+            playerInput.onConfirmGameOver += OnConfirmGameOver;
         }
 
         void OnDisable()
         {
             GameManager.onGameOver -= OnGameOver;
-            playerInput.onConfirmGameover -= OnConfirmGameOver;
+            playerInput.onConfirmGameOver -= OnConfirmGameOver;
         }
 
         void OnGameOver()

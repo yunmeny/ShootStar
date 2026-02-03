@@ -14,22 +14,11 @@ namespace Core.UI
             ButtonFunctionTable = new Dictionary<Button, System.Action>();
         }
 
-        private static void DisableOtherButton(Component button)
-        {
-            if (button.gameObject.name is "Button Cancel" or "Button Submit") return;
-            foreach (var value in ButtonFunctionTable.Where(value => value.Key.gameObject.name != button.gameObject.name))
-            {
-                value.Key.interactable = false;
-            }
-        }
-
         // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
         public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
         {
-            UIInput.Instance.DisableAllUIInput();
-        
-            // 禁用其他按钮
-            DisableOtherButton(animator.gameObject.GetComponent<Button>());
+            // 禁用UI输入系统
+            UIInput.Instance.DisableUIInput();
         }
 
         // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks

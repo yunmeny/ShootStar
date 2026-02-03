@@ -5,7 +5,7 @@ namespace Core.UI
         protected override void SetPercentText()
         {
             // percentText.text = (targetFillAmount * 100f).ToString("f2") + "%";
-            percentText.text = targetFillAmount.ToString("P2");
+            percentText.text = TargetFillAmount.ToString("P2");
         }
     
     }

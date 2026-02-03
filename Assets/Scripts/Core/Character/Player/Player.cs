@@ -1,15 +1,10 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using Core.SystemModules;
 using Core.SystemModules.Tools;
 using Core.UI;
-using Unity.Mathematics;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
+
 
 [RequireComponent(typeof(Rigidbody2D))] //添加刚体组件
 public class Player : Character

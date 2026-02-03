@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,12 +7,12 @@ namespace Core.UI
 {
     public class StateBar_HUD : StateBar
     {
-        [SerializeField] protected Text percentText;
+        [SerializeField] protected TextMeshProUGUI percentText;
 
         protected virtual void SetPercentText()
         {
             // percentText.text = Mathf.RoundToInt(targetFillAmount * 100f) + "%";
-            percentText.text = targetFillAmount.ToString("P0");
+            percentText.text = TargetFillAmount.ToString("P0");
         }
 
         public override void Initialize(float value, float maxValue)
@@ -20,10 +21,10 @@ namespace Core.UI
             SetPercentText();
         }
 
-        protected override IEnumerator BufferedFillingCoroutine(Image image)
+        protected override IEnumerator BufferedFillingCoroutine(bool isFront)
         {
             SetPercentText();
-            return base.BufferedFillingCoroutine(image);
+            return base.BufferedFillingCoroutine(isFront);
         }
     }
 }

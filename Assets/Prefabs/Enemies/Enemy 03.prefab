@@ -61,6 +61,9 @@ MonoBehaviour:
   projectileLunchSFX:
   - clip: {fileID: 8300000, guid: 35644134c067099459f55ecfa2efd85d, type: 3}
     volume: 0.5
+    track: 0
+    loop: 0
+    force: 1
   muzzle: {fileID: 4681689087969140024}
   minFireInterval: 2
   maxFireInterval: 4
@@ -81,8 +84,14 @@ MonoBehaviour:
   deathSFX:
   - clip: {fileID: 8300000, guid: 9314f85ef4c5ea04a87a0323c78fdd2e, type: 3}
     volume: 1
+    track: 0
+    loop: 0
+    force: 1
   - clip: {fileID: 8300000, guid: 0f2184b0c1d094741b11e8f4077c52e9, type: 3}
     volume: 1
+    track: 0
+    loop: 0
+    force: 1
   maxHp: 7
   onHeadStateBar: {fileID: 3291241923240467786}
   showHeadStateBar: 1
@@ -5058,13 +5067,15 @@ ParticleSystemRenderer:
   m_RenderAlignment: 0
   m_Pivot: {x: 0, y: 0, z: 0}
   m_Flip: {x: 0, y: 0, z: 0}
-  m_UseCustomVertexStreams: 1
   m_EnableGPUInstancing: 0
   m_ApplyActiveColorSpace: 0
   m_AllowRoll: 1
   m_FreeformStretching: 0
   m_RotateWithStretchDirection: 1
+  m_UseCustomVertexStreams: 1
   m_VertexStreams: 000304
+  m_UseCustomTrailVertexStreams: 0
+  m_TrailVertexStreams: 00010304
   m_Mesh: {fileID: 0}
   m_Mesh1: {fileID: 0}
   m_Mesh2: {fileID: 0}
@@ -9754,13 +9765,15 @@ ParticleSystemRenderer:
   m_RenderAlignment: 0
   m_Pivot: {x: 0, y: 0, z: 0}
   m_Flip: {x: 0, y: 0, z: 0}
-  m_UseCustomVertexStreams: 1
   m_EnableGPUInstancing: 0
   m_ApplyActiveColorSpace: 0
   m_AllowRoll: 1
   m_FreeformStretching: 0
   m_RotateWithStretchDirection: 1
+  m_UseCustomVertexStreams: 1
   m_VertexStreams: 000304
+  m_UseCustomTrailVertexStreams: 0
+  m_TrailVertexStreams: 00010304
   m_Mesh: {fileID: 0}
   m_Mesh1: {fileID: 0}
   m_Mesh2: {fileID: 0}
@@ -14801,13 +14814,15 @@ ParticleSystemRenderer:
   m_RenderAlignment: 0
   m_Pivot: {x: 0, y: 0, z: 0}
   m_Flip: {x: 0, y: 0, z: 0}
-  m_UseCustomVertexStreams: 1
   m_EnableGPUInstancing: 0
   m_ApplyActiveColorSpace: 0
   m_AllowRoll: 1
   m_FreeformStretching: 0
   m_RotateWithStretchDirection: 1
+  m_UseCustomVertexStreams: 1
   m_VertexStreams: 000304
+  m_UseCustomTrailVertexStreams: 0
+  m_TrailVertexStreams: 00010304
   m_Mesh: {fileID: 0}
   m_Mesh1: {fileID: 0}
   m_Mesh2: {fileID: 0}
@@ -14887,11 +14902,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1951451843191180971, guid: bf31f8dde2ef32f4eb3a615e054de804, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 0.014
       objectReference: {fileID: 0}
     - target: {fileID: 1951451843191180971, guid: bf31f8dde2ef32f4eb3a615e054de804, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.592
+      value: 0.365
       objectReference: {fileID: 0}
     - target: {fileID: 1951451843191180971, guid: bf31f8dde2ef32f4eb3a615e054de804, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -14904,6 +14919,10 @@ PrefabInstance:
     - target: {fileID: 1951451843191180971, guid: bf31f8dde2ef32f4eb3a615e054de804, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2540385266036163685, guid: bf31f8dde2ef32f4eb3a615e054de804, type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4620156886758747182, guid: bf31f8dde2ef32f4eb3a615e054de804, type: 3}
       propertyPath: m_Name

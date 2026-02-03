@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 [CreateAssetMenu(menuName = "Player Input")] //创建资源列表
 public class
     PlayerInput : ScriptableObject, InputActions.IGamePlayActions,
-        InputActions.IPauseMenuActions, InputActions.IGameOverActions //可重复使用数据容器 其不需要依附于游戏对象 
+        InputActions.IPauseMenuActions, InputActions.IGameOverActions, InputActions.IUIActions
 {
     private InputActions _inputActions; //实例化类
 
@@ -22,7 +22,8 @@ public class
     public event UnityAction onPause = delegate { };
     public event UnityAction onUnpause = delegate { };
     public event UnityAction onMissile = delegate { };
-    public event UnityAction onConfirmGameover = delegate { };
+    public event UnityAction onConfirmGameOver = delegate { };
+    public event UnityAction onUIPressed = delegate { };
     
     private void OnEnable()
     {
@@ -144,7 +145,30 @@ public class
     {
         if (context.performed)
         {
-            onConfirmGameover.Invoke();
+            onConfirmGameOver.Invoke();
         }
+    }
+
+    public void OnPressed(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            onUIPressed.Invoke();
+        }
+    }
+
+    public void OnSubmit(InputAction.CallbackContext context)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void OnCancel(InputAction.CallbackContext context)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void OnNavigate(InputAction.CallbackContext context)
+    {
+        throw new NotImplementedException();
     }
 }

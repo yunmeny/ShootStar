@@ -62,7 +62,8 @@ namespace Core.UI
             
             wei = Mathf.Lerp(wei,Vector2.Distance(transform.position, Camera.main.ScreenToWorldPoint(eventData.position))*0.1f, 0.3f);
             wei = Mathf.Clamp(wei, 0f, 0.4f);
-            pos.x = -0.5f*Mathf.Lerp(pos.x,Vector2.Dot((Vector2)transform.position - (Vector2)Camera.main.ScreenToWorldPoint(eventData.position),new Vector2(-1,1)), 0.1f);
+            pos.x = -0.1f*Vector2.Dot((Vector2)transform.position - (Vector2)Camera.main.ScreenToWorldPoint(eventData.position),new Vector2(-1,1));
+
             pos.x = Mathf.Clamp(pos.x, -1f, 1f);
             _material.SetVector(Pos, pos);
             _material.SetFloat(Wei, wei);

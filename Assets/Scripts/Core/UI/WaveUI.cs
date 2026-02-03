@@ -1,4 +1,4 @@
-using System;
+    using System;
 using Core.SystemModules;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -10,7 +10,6 @@ public class WaveUI : MonoBehaviour
 
     private void Awake()
     {
-        GetComponent<Canvas>().worldCamera = Camera.main;
         waveText = GetComponentInChildren<Text>();
     }
 

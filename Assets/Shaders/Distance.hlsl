@@ -1,4 +1,4 @@
-float sdRoundedBox(float2 p, float2 b, float4 r, out float d)
+float sdRoundedBox_float(float2 p, float2 b, float4 r, out float d)
 {
     // HLSL 支持向量分量的三元运算符，逻辑与 GLSL 一致
     r.xy = (p.x > 0.0f) ? r.xy : r.zw;
@@ -125,3 +125,84 @@ void sdRhombus_float(float2 p, float2 b, out float d)
     
     d = length(p) * sign(p.x);
 }
+
+// 辅助函数：计算向量的点乘自身（对应原代码的 dot2）
+float dot2(float2 v)
+{
+    return dot(v, v); // 等价于 v.x*v.x + v.y*v.y
+}
+
+// 转换后的心形距离场函数（与 sdCircle_float 格式完全一致）
+void sdHeart_float(float2 p, out float d)
+{
+    // 1. 复制输入向量并处理 x 轴绝对值（原代码 p.x = abs(p.x)）
+    float2 q = p;
+    q.x = abs(q.x);
+
+    // 2. 分支判断，计算距离值并赋值给 out 参数 d
+    if (q.y + q.x > 1.0)
+    {
+        // 分支1：心形外侧尖角区域的距离计算
+        d = sqrt(dot2(q - float2(0.25, 0.75))) - sqrt(2.0) / 4.0;
+    }
+    else
+    {
+        // 分支2：心形主体区域的距离计算
+        float term1 = dot2(q - float2(0.00, 1.00));          // 上半圆项
+        float term2 = dot2(q - 0.5 * max(q.x + q.y, 0.0));   // 下半部项
+        float min_term = min(term1, term2);                  // 取两项最小值
+        d = sqrt(min_term) * sign(q.x - q.y);                // 最终距离（带符号）
+    }
+}
+
+// 转换后的圆角X形距离场函数（与 sdCircle_float 格式完全一致）
+void sdRoundedX_float(float2 p, float w, float r, out float d)
+{
+    // 1. 对输入向量取绝对值（原代码 p = abs(p)）
+    // 使用临时变量 q 避免修改原始输入参数
+    float2 q = abs(p);
+    
+    // 2. 核心距离计算逻辑（完全保留原算法，仅拆解为更易读的步骤）
+    // 计算 min(p.x+p.y, w) * 0.5 标量值
+    float min_scalar = min(q.x + q.y, w) * 0.5;
+    // 向量减法：q - (min_scalar, min_scalar)（与原代码 p-min(...) 等价）
+    float2 temp_vec = q - float2(min_scalar, min_scalar);
+    // 最终距离计算：向量长度减圆角半径
+    d = length(temp_vec) - r;
+}
+
+
+// 转换后的十字形距离场函数（与 sdCircle_float 格式完全一致）
+void sdCross_float(float2 p, float2 b, float r, out float d)
+{
+    // 1. 对输入向量取绝对值（原代码 p = abs(p)）
+    // 使用临时变量 q 避免修改原始输入参数
+    float2 q = abs(p);
+    
+    // 2. 交换x/y分量（原代码 (p.y>p.x) ? p.yx : p.xy）
+    // GLSL的p.yx等价于float2(q.y, q.x)（交换x和y分量）
+    q = (q.y > q.x) ? float2(q.y, q.x) : q;
+    
+    // 3. 原代码 vec2 q = p - b → 新增temp_q避免变量覆盖
+    float2 temp_q = q - b;
+    
+    // 4. 计算k = max(q.y, q.x)（对应原代码 float k = max(q.y,q.x)）
+    float k = max(temp_q.y, temp_q.x);
+    
+    // 5. 计算w向量（原代码三元运算符拆分为if-else，逻辑等价且更易读）
+    float2 w;
+    if (k > 0.0)
+    {
+        w = temp_q;
+    }
+    else
+    {
+        w = float2(b.y - q.x, -k);
+    }
+    
+    // 6. 最终距离计算（原代码 return sign(k)*length(max(w,0.0)) + r）
+    float2 max_w = max(w, float2(0.0, 0.0)); // GLSL的max(w,0.0)等价于向量与0向量比较
+    d = sign(k) * length(max_w) + r;
+}
+
+

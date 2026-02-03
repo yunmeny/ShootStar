@@ -35,7 +35,6 @@ namespace Core.SystemModules
 
         void OnStoryButtonClick()
         {
-            mainMenuCanvas.enabled = false;
             SceneLoader.Instance.LoadGamePlayScene();
         }
 

@@ -12,8 +12,8 @@ namespace Core.UI
         [SerializeField] PlayerInput playerInput;
 
         private InputSystemUIInputModule _uiInputModule;
-    
- 
+
+
         protected override void Awake()
         {
             base.Awake();
@@ -47,12 +47,21 @@ namespace Core.UI
         {
             uiObject.Select();
             uiObject.OnSelect(null);
-        
+
             _uiInputModule.enabled = true;
         }
-    
 
-        public void DisableAllUIInput()
+        public void EnableUIInput()
+        {
+            _uiInputModule.enabled = true;
+        }
+
+        public void DisableUIInput()
+        {
+            _uiInputModule.enabled = false;
+        }
+        
+        public void DisablePlayerInput()
         {
             playerInput.DisableAllInput();
         }

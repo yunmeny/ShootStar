@@ -6,27 +6,32 @@ namespace Core.UI
 {
     public class StateBar : MonoBehaviour
     {
-        [SerializeField] protected Image fillImageBack;
-        [SerializeField] protected Image fillImageFront;
+        private static readonly int FrontProgress = Shader.PropertyToID("_FrontProgress");
+        private static readonly int BufferProgress = Shader.PropertyToID("_BufferProgress");
+
         [SerializeField] private float fillSpeed = 0.1f;
         [SerializeField] private float fillDelay = 0.5f;
         [SerializeField] bool delayFill = true;
-    
-        private float _previousFillAmount;
+
+        [SerializeField] protected new RawImage renderer;
+
+        private Material MainMaterial;
         private Canvas _canvas;
+        private float _previousFillAmount;
         private float _currentFillAmount;
-        protected float targetFillAmount;
+        protected float TargetFillAmount;
         private Coroutine _bufferFillCoroutine;
         WaitForSeconds _waitForDelayFill;
         private float _t;
 
         private void Awake()
         {
-            if (TryGetComponent<Canvas>(out Canvas canvas))
+            _canvas = GetComponent<Canvas>();
+            if (_canvas != null && _canvas.worldCamera == null)
             {
-                canvas.worldCamera = Camera.main;
+                _canvas.worldCamera = Camera.main;
             }
-        
+
             _waitForDelayFill = new WaitForSeconds(fillDelay);
         }
 
@@ -37,10 +42,13 @@ namespace Core.UI
 
         public virtual void Initialize(float value, float maxValue)
         {
+            MainMaterial = new(renderer.material);
+            renderer.material = MainMaterial;
             _currentFillAmount = value / maxValue;
-            targetFillAmount = _currentFillAmount;
-            fillImageBack.fillAmount = _currentFillAmount;
-            fillImageFront.fillAmount = _currentFillAmount;
+            TargetFillAmount = _currentFillAmount;
+            MainMaterial.SetFloat(BufferProgress, _currentFillAmount);
+            MainMaterial.SetFloat(FrontProgress, _currentFillAmount);
+
             UpdateState(value, maxValue);
         }
 
@@ -59,22 +67,23 @@ namespace Core.UI
             {
                 StopCoroutine(_bufferFillCoroutine);
             }
-            targetFillAmount = currentValue / maxValue; //计算目标填充量
-            if (_currentFillAmount > targetFillAmount)
+
+            TargetFillAmount = currentValue / maxValue; //计算目标填充量
+            if (_currentFillAmount > TargetFillAmount)
             {
-                fillImageFront.fillAmount = targetFillAmount;
-                _bufferFillCoroutine = StartCoroutine(BufferedFillingCoroutine(fillImageBack));
+                MainMaterial.SetFloat(FrontProgress, TargetFillAmount);
+                _bufferFillCoroutine = StartCoroutine(BufferedFillingCoroutine(false));
                 return;
             }
 
-            if (_currentFillAmount < targetFillAmount)
+            if (_currentFillAmount < TargetFillAmount)
             {
-                fillImageBack.fillAmount = targetFillAmount;
-                _bufferFillCoroutine = StartCoroutine(BufferedFillingCoroutine(fillImageFront));
+                MainMaterial.SetFloat(BufferProgress, TargetFillAmount);
+                _bufferFillCoroutine = StartCoroutine(BufferedFillingCoroutine(true));
             }
         }
 
-        protected virtual IEnumerator BufferedFillingCoroutine(Image image)
+        protected virtual IEnumerator BufferedFillingCoroutine(bool isFront)
         {
             if (delayFill)
             {
@@ -86,8 +95,8 @@ namespace Core.UI
             while (_t < 1)
             {
                 _t += Time.deltaTime * fillSpeed;
-                _currentFillAmount = Mathf.Lerp(_previousFillAmount, targetFillAmount, _t);
-                image.fillAmount = _currentFillAmount;
+                _currentFillAmount = Mathf.Lerp(_previousFillAmount, TargetFillAmount, _t);
+                MainMaterial.SetFloat(isFront ? FrontProgress : BufferProgress, _currentFillAmount);
                 yield return null;
             }
         }

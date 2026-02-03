@@ -24,7 +24,7 @@ namespace Core.UI
 
         private void Awake()
         {
-            if (TryGetComponent<Animator>(out Animator animator))
+            if (TryGetComponent(out Animator animator))
             {
                 if (animator.isActiveAndEnabled)
                 {
