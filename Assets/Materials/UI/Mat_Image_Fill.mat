@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_UI_HDR
+  m_Name: Mat_Image_Fill
   m_Shader: {fileID: 4800000, guid: 8021807d2bf67de489d87ff61cddcf4e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -37,5 +37,5 @@ Material:
     - _StencilWriteMask: 255
     - _UseUIAlphaClip: 0
     m_Colors:
-    - _Color: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
+    - _Color: {r: 11.984315, g: 11.984315, b: 11.984315, a: 1}
   m_BuildTextureStacks: []
