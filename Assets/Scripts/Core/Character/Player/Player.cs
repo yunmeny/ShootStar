@@ -220,7 +220,7 @@ public class Player : Character
     // 等待速度为0
     private IEnumerator WaitForVelocityZero()
     {
-        yield return new WaitUntil(() => _rigidbody.velocity == Vector2.zero);
+        yield return new WaitUntil(() => _rigidbody.linearVelocity == Vector2.zero);
         StopCoroutine(nameof(MovePositionLimitCoroutine)); //关闭协程
     }
 
@@ -228,14 +228,14 @@ public class Player : Character
     private IEnumerator MoveCoroutine(float time, Vector2 moveVelocity, Quaternion moveTopBottomQuaternion,
         Quaternion moveLeftRightQuaternion)
     {
-        previousVelocity = _rigidbody.velocity; //获取当前速度的模长
+        previousVelocity = _rigidbody.linearVelocity; //获取当前速度的模长
         previousRotation = transform.rotation; //获取当前旋转的角度
         var t = 0f;
         while (t < time)
         {
             t += Time.fixedDeltaTime;
             var moveQuaternion = moveTopBottomQuaternion * moveLeftRightQuaternion; //将两个旋转组合
-            _rigidbody.velocity = Vector2.Lerp(previousVelocity, moveVelocity, t / time);
+            _rigidbody.linearVelocity = Vector2.Lerp(previousVelocity, moveVelocity, t / time);
             transform.rotation = Quaternion.Lerp(previousRotation, moveQuaternion, t / time); //Quaternion
             yield return _waitForMoveFixedUpdate;
         }
