@@ -39,6 +39,15 @@ namespace Core.SystemModules
             // WaitUntil 参数为一个bool类型的委托 当委托返回true时 WaitUntil才会结束
         }
 
+        void OnEnable() => GameManager.onGameOver += StopSpawning;
+        void OnDisable() => GameManager.onGameOver -= StopSpawning;
+
+        void StopSpawning()
+        {
+            StopAllCoroutines();
+            if (waveUI) waveUI.SetActive(false);
+        }
+
         IEnumerator Start()
         {
             while (spawnEnemy && GameManager.GameState != GameState.GameOver)
@@ -46,19 +55,25 @@ namespace Core.SystemModules
                 waveUI.SetActive(true);
                 yield return _waitTimeBetweenWave;
                 waveUI.SetActive(false);
+                if (GameManager.GameState == GameState.GameOver) yield break;
                 yield return StartCoroutine(nameof(RandomlySpawnEnemyCoroutine));
+                if (GameManager.Instance.Mode == GameMode.Story && _waveNumber > Mathf.Max(1, bossWaveNumber))
+                {
+                    GameManager.Instance.EndRun(true);
+                    yield break;
+                }
             }
         }
 
         IEnumerator RandomlySpawnEnemyCoroutine()
         {
-            if (_waveNumber % bossWaveNumber == 0)
+            if (_waveNumber % Mathf.Max(1, bossWaveNumber) == 0)
             {
                 _enemyList.Add(PoolManger.Release(boss));
             }
             else
             {
-                _enemyAmount = Mathf.Clamp(_enemyAmount, minEnemyAmount + _waveNumber / bossWaveNumber, maxEnemyAmount);
+                _enemyAmount = Mathf.Clamp(_enemyAmount, minEnemyAmount + _waveNumber / Mathf.Max(1, bossWaveNumber), maxEnemyAmount);
                 for (var i = 0; i < _enemyAmount; i++)
                 {
                     _enemyList.Add(PoolManger.Release(enemies[Random.Range(0, enemies.Length)]));

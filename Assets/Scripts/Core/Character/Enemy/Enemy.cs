@@ -8,10 +8,12 @@ public class Enemy : Character
     [SerializeField] int waveHealthBonus = 10;
     
     LootSpawner _lootSpawner;
+    private float baseMaxHp;
 
     protected virtual void Awake()
     {
         _lootSpawner = GetComponent<LootSpawner>();
+        baseMaxHp = maxHp;
     }
     
     protected override void OnEnable()
@@ -34,10 +36,10 @@ public class Enemy : Character
     protected virtual void OnCollisionEnter2D(Collision2D other)
     {
         if (!other.gameObject.TryGetComponent(out Player player)) return;
-        player.Die();
         Die();
+        player.Die();
     }
 
-    private void SetHealthValue(int wave) => maxHp = (int)(maxHp * (1+wave*waveHealthBonus/100f));
+    private void SetHealthValue(int wave) => maxHp = (int)(baseMaxHp * (1+wave*waveHealthBonus/100f));
     
 }

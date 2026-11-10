@@ -1,5 +1,7 @@
+using System.Collections;
 using Core.SystemModules;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Core.UI
 {
@@ -8,19 +10,21 @@ namespace Core.UI
         [SerializeField] PlayerInput playerInput;
         [SerializeField] Canvas hudCanvas;
         [SerializeField] AudioData gameOverSFX;
-    
-        int _exitStateParameterID = Animator.StringToHash("GameOverScreenExit"); // 转换字符串为参数 ID
+        [SerializeField] float inputDelay = 1f;
         Canvas gameOverCanvas;
         Animator animator;
+        bool confirmed;
 
         void Awake()
         {
             gameOverCanvas = GetComponent<Canvas>();
             animator = GetComponent<Animator>();
-        
             gameOverCanvas.enabled = false;
-            animator.enabled = false;
-
+            if (animator)
+            {
+                animator.updateMode = AnimatorUpdateMode.UnscaledTime;
+                animator.enabled = false;
+            }
         }
 
         void OnEnable()
@@ -37,26 +41,36 @@ namespace Core.UI
 
         void OnGameOver()
         {
+            confirmed = false;
             hudCanvas.enabled = false;
             gameOverCanvas.enabled = true;
-            animator.enabled = true;
+            var title = transform.Find("Texts/Game Over Text");
+            if (title) title.GetComponent<Text>().text = GameManager.Instance.Victory ? "STAGE CLEAR!" : "GAME OVER!";
+            if (animator) animator.enabled = true;
             playerInput.DisableAllInput();
+            // Keep this fallback even if an animation clip loses its input event.
+            StartCoroutine(EnableInputAfterDelay());
         }
 
-    
-        // TODO 考虑启用输入的时机：可以在动画播放完成后插入事件帧调用此函数启用输入 || 也可以在动画行为脚本中的Exist事件中调用此函数 
+        IEnumerator EnableInputAfterDelay()
+        {
+            yield return new WaitForSecondsRealtime(inputDelay);
+            EnableGameOverScreenInput();
+        }
+
         void EnableGameOverScreenInput()
         {
-            playerInput.EnableGameOverInput();
+            if (!confirmed && GameManager.GameState == GameState.GameOver)
+                playerInput.EnableGameOverInput();
         }
 
         void OnConfirmGameOver()
         {
+            if (confirmed || GameManager.GameState != GameState.GameOver) return;
+            confirmed = true;
             AudioManager.Instance.PlaySfx(gameOverSFX);
             playerInput.DisableAllInput();
-            animator.Play(_exitStateParameterID);
             SceneLoader.Instance.LoadScoreScene();
         }
-  
     }
 }
