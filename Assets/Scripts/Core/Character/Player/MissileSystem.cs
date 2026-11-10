@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class MissileSystem : MonoBehaviour
 {
+    [SerializeField] private MissileView missileView;
     [SerializeField] private PlayerInput Input;
     [SerializeField] private GameObject missile;
     [SerializeField] private float cooldown = 1f;
@@ -12,20 +13,18 @@ public class MissileSystem : MonoBehaviour
     [SerializeField] private int defaultAmount = 5;
     [SerializeField] private AudioData lunchSFX;
 
-    private WaitForSeconds waitforCooldown;
-    private bool isReady = true;
-    static int _amount;
+    private bool m_isReady = true;
+    private static int s_amount;
 
     private void Awake()
     {
-        _amount = defaultAmount;
-        waitforCooldown = new WaitForSeconds(cooldown);
+        s_amount = defaultAmount;
     }
 
     private void OnEnable()
     {
         Input.onMissile += OnMissile;
-        MissileDisply.UpdateAmountText(_amount);
+        missileView.UpdateAmountText(s_amount);
     }
 
     private void OnDisable()
@@ -35,16 +34,16 @@ public class MissileSystem : MonoBehaviour
 
     private void OnMissile()
     {
-        if (_amount <= 0 || !isReady) return;
+        if (s_amount <= 0 || !m_isReady) return;
 
-        isReady = false;
+        m_isReady = false;
         AudioManager.Instance.PlaySfx(lunchSFX);
         PoolManger.Release(missile, muzzle.position);
-        _amount--;
-        MissileDisply.UpdateAmountText(_amount);
-        if (_amount == 0)
+        s_amount--;
+        missileView.UpdateAmountText(s_amount);
+        if (s_amount == 0)
         {
-            MissileDisply.UpdateCooldown(1);
+            missileView.UpdateCooldown(1);
         }
         else
         {
@@ -52,24 +51,24 @@ public class MissileSystem : MonoBehaviour
         }
     }
 
-    IEnumerator WaitForCooldown()
+    private IEnumerator WaitForCooldown()
     {
         var cooldownValue = cooldown;
 
         while (cooldownValue > 0f)
         {
-            MissileDisply.UpdateCooldown(cooldownValue / cooldown);
+            missileView.UpdateCooldown(cooldownValue / cooldown);
             cooldownValue = Mathf.Max(cooldownValue - Time.deltaTime, 0f);
             yield return null;
         }
 
-        isReady = true;
+        m_isReady = true;
     }
 
-    public static void AddMissile(int amount)
+    public void AddMissile(int amount)
     {
-        _amount += amount;
-        MissileDisply.UpdateAmountText(_amount);
+        MissileSystem.s_amount += amount;
+        missileView.UpdateAmountText(MissileSystem.s_amount);
 
     }
 }

@@ -26,10 +26,11 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _AutoRadius: 0
     - _DIRECTION: 0
     - _FrontProgress: 0.418
     m_Colors:
-    - _BufferColor: {r: 0.7921569, g: 0.5176471, b: 0.5176471, a: 0}
+    - _BufferColor: {r: 1, g: 0.7058824, b: 0.7058824, a: 0}
     - _WH: {r: 0.9, g: 0.05, b: 0, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &1981820627774219989
