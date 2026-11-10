@@ -64,11 +64,19 @@ public class
     public void DisableAllInput() => _inputActions.Disable();
     
     //激活动作表方法
-    public void EnableGamePlayInput() => SwitchInputActionMap(_inputActions.GamePlay, false);
+    public void EnableGamePlayInput()
+    {
+        SwitchToFixedUpdateMode();
+        SwitchInputActionMap(_inputActions.GamePlay, false);
+    }
     
     public void EnablePauseMenuInput() => SwitchInputActionMap(_inputActions.PauseMenu, true);
     
-    public void EnableGameOverInput() => SwitchInputActionMap(_inputActions.GameOver, true);
+    public void EnableGameOverInput()
+    {
+        SwitchToDynamicUpdateMode();
+        SwitchInputActionMap(_inputActions.GameOver, true);
+    }
     
     //实现接口里面的OnMove方法
     public void OnMove(InputAction.CallbackContext context)

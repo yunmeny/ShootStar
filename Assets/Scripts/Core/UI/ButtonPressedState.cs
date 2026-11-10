@@ -7,12 +7,7 @@ namespace Core.UI
 {
     public class ButtonPressedState : StateMachineBehaviour
     {
-        public static Dictionary<Button, System.Action> ButtonFunctionTable;
-
-        void Awake()
-        {
-            ButtonFunctionTable = new Dictionary<Button, System.Action>();
-        }
+        public static readonly Dictionary<Button, System.Action> ButtonFunctionTable = new Dictionary<Button, System.Action>();
 
         // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
         public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -30,7 +25,7 @@ namespace Core.UI
         public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
         {
             // 当按钮动画播放结束时，才执行按钮对应的功能
-            ButtonFunctionTable[animator.gameObject.GetComponent<Button>()].Invoke();
+            if (ButtonFunctionTable.TryGetValue(animator.GetComponent<Button>(), out var action)) action?.Invoke();
         }
 
         // OnStateMove is called right after Animator.OnAnimatorMove()

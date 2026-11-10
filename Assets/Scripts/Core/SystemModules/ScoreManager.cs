@@ -11,11 +11,26 @@ namespace Core.SystemModules
 
         private int _score;
         private int currentScore;
-        public int ScoreAmount => _score;
+        public int ScoreAmount => currentScore;
+        private Coroutine scoreAnimation;
+        private bool scoreSaved;
+
+        public void FinishScore()
+        {
+            StopAllCoroutines();
+            scoreAnimation = null;
+            _score = currentScore;
+            Score.UpdateScoreText(_score);
+            Score.ScaleText(Vector3.one);
+        }
         Vector3  scoreTextScale = new Vector3(1.4f, 1.4f, 1.4f);
     
         public void ResetScore()
         {
+            StopAllCoroutines();
+            scoreAnimation = null;
+            scoreSaved = false;
+            playerName = "No Name";
             _score = 0;
             currentScore = 0;
             Score.UpdateScoreText(_score);
@@ -23,9 +38,9 @@ namespace Core.SystemModules
 
         public void AddScore(int score)
         {
+            if (GameManager.GameState != GameState.Play || score <= 0) return;
             currentScore += score;
-            // Score.UpdateScoreText(_score);
-            StartCoroutine(nameof(AddScoreCoroutine));
+            if (scoreAnimation == null) scoreAnimation = StartCoroutine(AddScoreCoroutine());
         }
 
         IEnumerator AddScoreCoroutine()
@@ -33,11 +48,12 @@ namespace Core.SystemModules
             Score.ScaleText(scoreTextScale);
             while (currentScore > _score)
             {
-                _score += 2;
+                _score = Mathf.Min(currentScore, _score + Mathf.Max(2, (currentScore - _score) / 8));
                 Score.UpdateScoreText(_score);
                 yield return null;
             }
             Score.ScaleText(Vector3.one);
+            scoreAnimation = null;
         }
         #endregion
 
@@ -65,21 +81,24 @@ namespace Core.SystemModules
     
         string playerName = "No Name";
     
-        public bool HasNewHighScore() => _score > LoadPlayerScoreData().list[9].score;
+        public bool HasNewHighScore() => ScoreAmount > LoadPlayerScoreData().list[9].score;
 
         public void SetPlayerName(string name)
         {
-            playerName = name;
+            playerName = string.IsNullOrWhiteSpace(name) ? "No Name" : name.Trim();
         }
 
         public void SavePlayerScoreData()
         {
+            if (scoreSaved) return;
             var playerScoreData = LoadPlayerScoreData();
         
-            playerScoreData.list.Add(new PlayerScore(_score, playerName));
+            playerScoreData.list.Add(new PlayerScore(ScoreAmount, playerName));
             playerScoreData.list.Sort((a, b) => b.score.CompareTo(a.score));
         
+            if (playerScoreData.list.Count > 10) playerScoreData.list.RemoveRange(10, playerScoreData.list.Count - 10);
             SaveSystem.SaveByJson(SaveFileName, playerScoreData);
+            scoreSaved = true;
         }
     
         public PlayerScoreDate LoadPlayerScoreData()
@@ -89,14 +108,13 @@ namespace Core.SystemModules
             {
                 playerScoreData = SaveSystem.LoadFromJson<PlayerScoreDate>(SaveFileName);
             }
-            else
-            {
-                while (playerScoreData.list.Count < 10)
-                {
-                    playerScoreData.list.Add(new PlayerScore(0, playerName));
-                }
-                SaveSystem.SaveByJson(SaveFileName, playerScoreData);
-            }
+            if (playerScoreData == null) playerScoreData = new PlayerScoreDate();
+            if (playerScoreData.list == null) playerScoreData.list = new List<PlayerScore>();
+            playerScoreData.list.RemoveAll(entry => entry == null);
+            playerScoreData.list.Sort((a, b) => b.score.CompareTo(a.score));
+            if (playerScoreData.list.Count > 10) playerScoreData.list.RemoveRange(10, playerScoreData.list.Count - 10);
+            while (playerScoreData.list.Count < 10)
+                playerScoreData.list.Add(new PlayerScore(0, "No Name"));
             return playerScoreData;
         }
         #endregion

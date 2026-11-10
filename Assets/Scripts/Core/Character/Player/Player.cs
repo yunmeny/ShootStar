@@ -131,6 +131,7 @@ public class Player : Character
 
     void Start()
     {
+        GameManager.Instance.BeginRun(GameManager.Instance.Mode);
         onHUDStateBar.Initialize(hp, maxHp);
     }
 
@@ -178,8 +179,8 @@ public class Player : Character
 
     public override void Die()
     {
-        GameManager.onGameOver?.Invoke();
-        GameManager.GameState = GameState.GameOver;
+        if (GameManager.GameState != GameState.Play) return;
+        GameManager.Instance.EndRun(false);
         onHUDStateBar.UpdateState(0, maxHp);
         base.Die();
     }

@@ -15,12 +15,18 @@ namespace Core.UI
 
         private void Start()
         {
-            ScoreManager.Instance.ResetScore();
+            UpdateScoreText(ScoreManager.Instance.ScoreAmount);
         }
     
-        public static void UpdateScoreText(int score) => scoreText.text = score.ToString();
+        public static void UpdateScoreText(int score)
+        {
+            if (scoreText) scoreText.text = score.ToString();
+        }
     
     
-        public static void ScaleText(Vector3 target)=> scoreText.transform.localScale = target; 
+        public static void ScaleText(Vector3 target)
+        {
+            if (scoreText) scoreText.transform.localScale = target;
+        }
     }
 }

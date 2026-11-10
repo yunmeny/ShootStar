@@ -22,10 +22,16 @@ namespace Core.SystemModules
         [SerializeField] Button submitButton;
         [SerializeField] InputField inputField;
     
+        private Button retryButton;
+
         void Start()
         {
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
+            Time.timeScale = 1f;
+            scoreCanvas.enabled = false;
+            newHighScoreCanvas.enabled = false;
+            CreateRetryButton();
             ShowRandomBackground();
             if (ScoreManager.Instance.HasNewHighScore())
             {
@@ -44,7 +50,39 @@ namespace Core.SystemModules
 
         private void OnDisable()
         {
-            ButtonPressedState.ButtonFunctionTable.Clear();
+            ButtonPressedState.ButtonFunctionTable.Remove(mainMenuButton);
+            ButtonPressedState.ButtonFunctionTable.Remove(cancelButton);
+            ButtonPressedState.ButtonFunctionTable.Remove(submitButton);
+            if (retryButton) ButtonPressedState.ButtonFunctionTable.Remove(retryButton);
+        }
+
+        void CreateRetryButton()
+        {
+            retryButton = Instantiate(mainMenuButton, mainMenuButton.transform.parent);
+            retryButton.name = "RetryButton";
+            retryButton.GetComponentInChildren<Text>().text = "PLAY AGAIN";
+            retryButton.onClick = new Button.ButtonClickedEvent();
+            retryButton.onClick.AddListener(OnRetryButtonClick);
+            var original = (RectTransform)mainMenuButton.transform;
+            var rect = (RectTransform)retryButton.transform;
+            if (!mainMenuButton.transform.parent.GetComponent<LayoutGroup>())
+                rect.anchoredPosition = original.anchoredPosition + Vector2.up * (original.rect.height + 20f);
+            retryButton.transform.SetSiblingIndex(mainMenuButton.transform.GetSiblingIndex());
+            ButtonPressedState.ButtonFunctionTable[retryButton] = OnRetryButtonClick;
+            var navigation = mainMenuButton.navigation;
+            navigation.mode = Navigation.Mode.Explicit;
+            navigation.selectOnUp = retryButton;
+            mainMenuButton.navigation = navigation;
+            navigation = retryButton.navigation;
+            navigation.mode = Navigation.Mode.Explicit;
+            navigation.selectOnDown = mainMenuButton;
+            retryButton.navigation = navigation;
+        }
+
+        void OnRetryButtonClick()
+        {
+            scoreCanvas.enabled = false;
+            SceneLoader.Instance.RetryGamePlayScene();
         }
 
         void ShowRandomBackground()
@@ -54,6 +92,7 @@ namespace Core.SystemModules
 
         private void ShowNewHighScoreScreen()
         {
+            scoreCanvas.enabled = false;
             newHighScoreCanvas.enabled = true;
             UIInput.Instance.SelectUI(cancelButton);
         }
@@ -61,7 +100,6 @@ namespace Core.SystemModules
         private void HideNewHighScoreScreen()
         {
             newHighScoreCanvas.enabled = false;
-            ScoreManager.Instance.SavePlayerScoreData();
             ShowRandomBackground();
             ShowScoreScreen();
         }
@@ -70,7 +108,7 @@ namespace Core.SystemModules
         {
             scoreCanvas.enabled = true;
             playerScoreText.text = ScoreManager.Instance.ScoreAmount.ToString();
-            UIInput.Instance.SelectUI(mainMenuButton);
+            UIInput.Instance.SelectUI(retryButton);
             UpdateHighScoreLeaderboard();
         }
 
@@ -78,7 +116,7 @@ namespace Core.SystemModules
         {
             var playerScoreList =  ScoreManager.Instance.LoadPlayerScoreData();
 
-            for (var i = 0; i < highScoreLeaderboardContainer.childCount; i++)
+            for (var i = 0; i < Mathf.Min(highScoreLeaderboardContainer.childCount, playerScoreList.list.Count); i++)
             {
                 var child = highScoreLeaderboardContainer.GetChild(i);
             
@@ -105,6 +143,7 @@ namespace Core.SystemModules
             {
                 ScoreManager.Instance.SetPlayerName(inputField.text);
             }
+            ScoreManager.Instance.SavePlayerScoreData();
             HideNewHighScoreScreen();
         }
     

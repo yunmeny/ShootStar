@@ -30,6 +30,7 @@ namespace Core.SystemModules
 
         void OnEnable()
         {
+            SceneLoader.OptionsClosed += OnOptionsClosed;
             playerInput.onPause += Pause;
             playerInput.onUnpause += Unpause;
         
@@ -44,14 +45,19 @@ namespace Core.SystemModules
     
         private void OnDisable()
         {
+            SceneLoader.OptionsClosed -= OnOptionsClosed;
             playerInput.onPause -= Pause;
             playerInput.onUnpause -= Unpause;
         
-            ButtonPressedState.ButtonFunctionTable.Clear();
+            ButtonPressedState.ButtonFunctionTable.Remove(resumeButton);
+            ButtonPressedState.ButtonFunctionTable.Remove(mainMenuButton);
+            ButtonPressedState.ButtonFunctionTable.Remove(optionsButton);
+            ButtonTable.Clear();
         }
 
         void Pause()
         {
+            if (GameManager.GameState != GameState.Play) return;
             AudioManager.Instance.PlaySfx(pauseSFX);
             TimeController.Instance.Pause();
             GameManager.GameState = GameState.Pause;
@@ -68,7 +74,7 @@ namespace Core.SystemModules
 
         void Unpause()
         {
-            GameManager.GameState = GameState.Play;
+            if (GameManager.GameState != GameState.Pause) return;
             AudioManager.Instance.PlaySfx(unpauseSFX);
             resumeButton.Select();
             resumeButton.animator.SetTrigger(_buttonPressedParameterID);
@@ -83,11 +89,18 @@ namespace Core.SystemModules
             playerInput.SwitchToFixedUpdateMode();
         }
 
+        void OnOptionsClosed()
+        {
+            menuCanvas.enabled = true;
+            playerInput.EnablePauseMenuInput();
+            UIInput.Instance.SelectUI(resumeButton);
+        }
+
         void OnOptionsButtonClick()
         {
             menuCanvas.enabled = false;
             // 打开设置菜单
-            SceneLoader.Instance.LoadOptionsScene();
+            SceneLoader.Instance.LoadOptionsScene(optionsButton);
         }
 
         void OnMainMenuButtonClick()

@@ -18,8 +18,19 @@ namespace Core.SystemModules
             _defaultDeltaFixedTime = Time.fixedDeltaTime;
         }
     
+        public void ResetTime()
+        {
+            StopAllCoroutines();
+            Time.timeScale = 1f;
+            Time.fixedDeltaTime = _defaultDeltaFixedTime;
+            _timeScaleBeforePause = 1f;
+        }
+
+        private void OnDestroy() => ResetTime();
+
         public void Pause()
         {
+            if (GameManager.GameState != GameState.Play) return;
             _timeScaleBeforePause = Time.timeScale;
             Time.timeScale = 0;
             GameManager.GameState = GameState.Pause;
@@ -27,6 +38,7 @@ namespace Core.SystemModules
 
         public void UnPause()
         {
+            if (GameManager.GameState != GameState.Pause) return;
             Time.timeScale = _timeScaleBeforePause;
             GameManager.GameState = GameState.Play;
         }

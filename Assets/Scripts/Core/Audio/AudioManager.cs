@@ -23,6 +23,9 @@ public class AudioManager : PersistentSingleton<AudioManager>
     // 所有音频源对象
     private List<AudioSource> trackAudioObj = new List<AudioSource>();
 
+    public float BGMVolume => bgmPlayer ? bgmPlayer.volume : 1f;
+    public float SfxVolume => sfxPlayer ? sfxPlayer.volume : 1f;
+
     public void SetBGMVolume(float volume)
     {
         _bgmVolume = volume;
