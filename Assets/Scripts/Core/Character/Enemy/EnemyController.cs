@@ -41,6 +41,24 @@ public class EnemyController : MonoBehaviour
         StopAllCoroutines();
     }
 
+    // Test chapter presents aligned pairs so piercing and side shots have readable targets.
+    public void SetBuildTestFormation(Vector3 slot)
+    {
+        StopCoroutine(nameof(RandomMoveCoroutine));
+        transform.position = new Vector3(Viewport.Instance.MaxX + paddingX, slot.y);
+        transform.rotation = Quaternion.identity;
+        StartCoroutine(MoveToFormation(slot));
+    }
+
+    private IEnumerator MoveToFormation(Vector3 slot)
+    {
+        while (Vector3.Distance(transform.position, slot) > 0.01f)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, slot, moveSpeed * Time.deltaTime);
+            yield return null;
+        }
+    }
+
     protected virtual IEnumerator RandomMoveCoroutine()
     {
         transform.position = Viewport.Instance.RandomEnemySpawnPosition(paddingX, paddingY);

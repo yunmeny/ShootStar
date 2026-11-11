@@ -17,6 +17,8 @@ namespace Core.UI
 
         private Material MainMaterial;
         private Canvas _canvas;
+        private Transform _followTarget;
+        private Vector3 _worldOffset;
         private float _previousFillAmount;
         private float _currentFillAmount;
         protected float TargetFillAmount;
@@ -32,7 +34,26 @@ namespace Core.UI
                 _canvas.worldCamera = Camera.main;
             }
 
+            if (_canvas != null && _canvas.renderMode == RenderMode.WorldSpace)
+            {
+                _followTarget = transform.parent;
+                if (_followTarget != null)
+                    _worldOffset = transform.position - _followTarget.position;
+            }
+
             _waitForDelayFill = new WaitForSeconds(fillDelay);
+        }
+
+        private void LateUpdate()
+        {
+            if (_canvas == null || _canvas.renderMode != RenderMode.WorldSpace) return;
+
+            // Follow movement without inheriting the aircraft's banking or dodge roll.
+            if (_followTarget != null)
+                transform.position = _followTarget.position + _worldOffset;
+
+            var camera = _canvas.worldCamera;
+            transform.rotation = camera != null ? camera.transform.rotation : Quaternion.identity;
         }
 
         private void OnDisable()

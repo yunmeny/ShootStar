@@ -9,16 +9,30 @@ public class PlayerTraceProjectile : PlayerProjectile
     
     protected override void OnEnable()
     {
+        InitializePlayerShot();
+        if (IsFragment)
+        {
+            StartMovingDirectly();
+            return;
+        }
         SetTarget(EenemyManager.Instance.GetRandomEnemy);
         transform.rotation = Quaternion.identity;
         if (Target == null)
         {
-            base.OnEnable();
+            StartMovingDirectly();
         }
         else
         {
             // base.OnEnable();
             StartCoroutine(guidanceSystem.HomingCoroutine(Target));
         }
+    }
+
+    protected override void OnPiercedTarget()
+    {
+        // Overdrive rounds continue along their impact heading instead of orbiting the ignored target.
+        StopAllCoroutines();
+        SetTarget(null);
+        StartMovingDirectly();
     }
 }

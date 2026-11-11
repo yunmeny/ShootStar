@@ -6,6 +6,11 @@ using UnityEngine;
 
 public class PoolManger : MonoBehaviour
 {
+    public static GameObject Release(GameObject prefab, Vector3 position, Quaternion rotation, System.Action<GameObject> configure)
+    {
+        return _dictionary[prefab].PrepareObject(position, rotation, configure);
+    }
+
     [SerializeField] private Pool[] vfxPools;
     [SerializeField] private Pool[] playerProjectilePools; //  Pool类数组 代表一系列对象池
     [SerializeField] private Pool[] enemyProjectilePools;

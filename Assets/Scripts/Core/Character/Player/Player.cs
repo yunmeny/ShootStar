@@ -73,6 +73,8 @@ public class Player : Character
     private WaitForFixedUpdate _waitForMoveFixedUpdate; // 移动协程中
     private WaitForSeconds _waitForFireSeconds;
     private WaitForSeconds _waitForOverdriveFireSeconds;
+    private WaitForSeconds _waitForBoostFireSeconds;
+    private WaitForSeconds _waitForBoostOverdriveFireSeconds;
     private WaitForSeconds _waitForSecondsGenerateHealth;
     private WaitForSeconds _waitForInvincible;
     private Coroutine _moveCoroutine;
@@ -81,6 +83,9 @@ public class Player : Character
     Collider2D _collider;
     
     public bool IsMaxHealth => Math.Abs(hp - maxHp) < Mathf.Epsilon;
+    public float MaximumHealth => maxHp;
+    private float _baseMaxHp;
+    private RunUpgradeState RunUpgrades => RunUpgradeController.Instance ? RunUpgradeController.Instance.Run : null;
 
     #region EVEVT
 
@@ -88,6 +93,7 @@ public class Player : Character
     {
         _rigidbody = GetComponent<Rigidbody2D>();
         _collider = GetComponent<Collider2D>();
+        _baseMaxHp = maxHp;
         
         dodgeDuration = maxRoll / rollSpeed; //计算闪避持续时间
         _rigidbody.gravityScale = 0f; //设置重力为0 使其凭空悬浮 使玩家可以在场景中任意移动
@@ -95,8 +101,7 @@ public class Player : Character
         paddingX = transform.GetChild(0).GetComponent<Renderer>().bounds.size.x / 2;
         paddingY = transform.GetChild(0).GetComponent<Renderer>().bounds.size.y / 2;
         
-        _waitForFireSeconds = new WaitForSeconds(fireInterval);
-        _waitForOverdriveFireSeconds = new WaitForSeconds(fireInterval / overdriveFireFactor);
+        RefreshFireWaits();
         _waitForSecondsGenerateHealth = new WaitForSeconds(generateHealthInterval);
         _waitForInvincible = new WaitForSeconds(InvincibleTime);
         _waitForMoveFixedUpdate = new WaitForFixedUpdate();
@@ -137,10 +142,41 @@ public class Player : Character
 
     #endregion
 
+    public void BeginUpgradeSelection()
+    {
+        Input.EnableUpgradeSelectionInput();
+        StopFire();
+        if (_moveCoroutine != null) StopCoroutine(_moveCoroutine);
+        StopCoroutine(nameof(WaitForVelocityZero));
+        StopCoroutine(nameof(MovePositionLimitCoroutine));
+        moveDirection = Vector2.zero;
+        _rigidbody.linearVelocity = Vector2.zero;
+    }
+
+    public void EndUpgradeSelection() => Input.EnableGamePlayInput();
+
+    public void RefreshRunUpgrades()
+    {
+        RefreshFireWaits();
+        float previousMax = maxHp;
+        maxHp = _baseMaxHp * (RunUpgrades?.HullMultiplier ?? 1f);
+        if (maxHp > previousMax) RestoreHealth(maxHp - previousMax);
+    }
+
+    private void RefreshFireWaits()
+    {
+        float rate = RunUpgrades?.FireRateMultiplier ?? 1f;
+        _waitForFireSeconds = new WaitForSeconds(fireInterval / rate);
+        _waitForOverdriveFireSeconds = new WaitForSeconds(fireInterval / (overdriveFireFactor * rate));
+        _waitForBoostFireSeconds = new WaitForSeconds(fireInterval / (rate * 1.5f));
+        _waitForBoostOverdriveFireSeconds = new WaitForSeconds(fireInterval / (overdriveFireFactor * rate * 1.5f));
+    }
+
     #region Health
 
     public override void TakeDamage(float damage)
     {
+        if (GameManager.GameState != GameState.Play) return;
         base.TakeDamage(damage);
         if(!gameObject.activeSelf)  return;
 
@@ -198,7 +234,7 @@ public class Player : Character
             StopCoroutine(_moveCoroutine); //StopCoroutine的第三个重载重载:一个协程变量 以解决变量不对称
         }
         moveDirection = input.normalized;
-        _moveCoroutine = StartCoroutine(MoveCoroutine(accelerationTime, moveSpeed * moveDirection,
+        _moveCoroutine = StartCoroutine(MoveCoroutine(accelerationTime, moveSpeed * (RunUpgrades?.MoveSpeedMultiplier ?? 1f) * moveDirection,
             Quaternion.AngleAxis(moveQuaternionAngleTb * input.y, Vector3.right),
             Quaternion.AngleAxis(moveQuaternionAngleLr * input.x, Vector3.forward))); 
 
@@ -259,6 +295,8 @@ public class Player : Character
 
     void Fire()
     {
+        if (GameManager.GameState != GameState.Play) return;
+        StopCoroutine(nameof(FireCoroutine));
         StartCoroutine(nameof(FireCoroutine));
         fireVfx.Play();
         // StartCoroutine(FireCoroutine());
@@ -275,24 +313,28 @@ public class Player : Character
     {
         while (gameObject.activeSelf)
         {
+            var upgrades = RunUpgradeController.Instance;
+            float volleyDamage = upgrades && upgrades.Run.HasKineticBattery ? upgrades.Combat.ConsumeVolley() : 1f;
             switch (weaponPower)
             {
                 case 0:
-                    PoolManger.Release(_isOverdriving ? overdriveProjectile : projectile1, muzzleMiddle.position); //通过对象池生成子弹对象实例以发射子弹
+                    PlayerProjectile.FireMainGun(_isOverdriving ? overdriveProjectile : projectile1, projectile1, muzzleMiddle.position, volleyDamage);
                     break;
                 case 1:
-                    PoolManger.Release(_isOverdriving ? overdriveProjectile : projectile1, muzzleTop.position);
-                    PoolManger.Release(_isOverdriving ? overdriveProjectile : projectile1, muzzleBottom.position);
+                    PlayerProjectile.FireMainGun(_isOverdriving ? overdriveProjectile : projectile1, projectile1, muzzleTop.position, volleyDamage);
+                    PlayerProjectile.FireMainGun(_isOverdriving ? overdriveProjectile : projectile1, projectile1, muzzleBottom.position, volleyDamage);
                     break;
                 case 2:
-                    PoolManger.Release(_isOverdriving ? overdriveProjectile : projectile2, muzzleTop.position);
-                    PoolManger.Release(_isOverdriving ? overdriveProjectile : projectile1, muzzleMiddle.position);
-                    PoolManger.Release(_isOverdriving ? overdriveProjectile : projectile3, muzzleBottom.position);
+                    PlayerProjectile.FireMainGun(_isOverdriving ? overdriveProjectile : projectile2, projectile1, muzzleTop.position, volleyDamage);
+                    PlayerProjectile.FireMainGun(_isOverdriving ? overdriveProjectile : projectile1, projectile1, muzzleMiddle.position, volleyDamage);
+                    PlayerProjectile.FireMainGun(_isOverdriving ? overdriveProjectile : projectile3, projectile1, muzzleBottom.position, volleyDamage);
                     break;
             }
             AudioManager.Instance.PlayRanSfx(projectileLunchSFX);
             
-            yield return _isOverdriving ? _waitForOverdriveFireSeconds : _waitForFireSeconds;
+            bool boosted = upgrades && upgrades.Combat.BoostRemaining > 0f;
+            yield return boosted ? (_isOverdriving ? _waitForBoostOverdriveFireSeconds : _waitForBoostFireSeconds) :
+                (_isOverdriving ? _waitForOverdriveFireSeconds : _waitForFireSeconds);
         }
     }
 
@@ -335,7 +377,7 @@ public class Player : Character
 
     void Dodge()
     {
-        if (_isDodging || !PlayerEnergy.Instance.IsEnough(dodgeCost)) return;
+        if (GameManager.GameState != GameState.Play || _isDodging || !PlayerEnergy.Instance.IsEnough(EffectiveDodgeCost)) return;
         TimeController.Instance.BulletTime(dodgeBulletTime,dodgeBulletTime);
         StartCoroutine(nameof(DodgeCoroutine));
     }
@@ -345,7 +387,7 @@ public class Player : Character
         _isDodging = true;
         AudioManager.Instance.PlayRanSfx(dodgeSFX);
         // 消耗能量
-        PlayerEnergy.Instance.UseEnergy(dodgeCost);
+        PlayerEnergy.Instance.UseEnergy(EffectiveDodgeCost);
         
         // 让玩家无敌
         _collider.isTrigger = true;
@@ -380,6 +422,8 @@ public class Player : Character
         transform.localScale = Vector3.one;
         _collider.isTrigger = false;
         _isDodging = false;
+        var upgrades = RunUpgradeController.Instance;
+        if (upgrades && upgrades.Run.HasSlipstream) upgrades.Combat.GrantBoost();
     }
     
 
@@ -389,24 +433,32 @@ public class Player : Character
 
     void Overdrive()
     {
-        if (!PlayerEnergy.Instance.IsEnough(PlayerEnergy.MAX_ENERGY)) return;
+        if (GameManager.GameState != GameState.Play || _isOverdriving || !PlayerEnergy.Instance.IsEnough(PlayerEnergy.MAX_ENERGY)) return;
         TimeController.Instance.BulletTime(overdriveBulletTime,overdriveBulletTime);
         PlayerOverdrive.on.Invoke();
     }
     
     void OverdriveOn()
     {
+        if (_isOverdriving) return;
         _isOverdriving = true;
-        dodgeCost = (int) (dodgeCost * overdriveDodgeFactor);
         moveSpeed *= overdriveSpeedFactor;
+        var upgrades = RunUpgradeController.Instance;
+        if (upgrades && upgrades.Run.HasOverdriveRelay) upgrades.Combat.AddCharge(50);
     }
 
     void OverdriveOff()
     {
+        if (!_isOverdriving) return;
         _isOverdriving = false;
-        dodgeCost = (int) (dodgeCost / overdriveDodgeFactor);
         moveSpeed /= overdriveSpeedFactor;
+        var upgrades = RunUpgradeController.Instance;
+        if (GameManager.GameState == GameState.Play && upgrades && upgrades.Run.HasOverdriveRelay)
+            upgrades.Combat.GrantBoost();
     }
+
+    private int EffectiveDodgeCost => RunUpgrades != null ? RunUpgrades.DodgeEnergyCost(dodgeCost,
+        _isOverdriving ? overdriveDodgeFactor : 1f) : Mathf.Max(1, Mathf.CeilToInt(dodgeCost * (_isOverdriving ? overdriveDodgeFactor : 1f)));
 
     #endregion
     

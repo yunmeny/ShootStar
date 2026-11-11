@@ -48,6 +48,7 @@ public class PlayerEnergy : Singleton<PlayerEnergy>
 
     void PlayerOverdriveOn()
     {
+        if (!_available) return;
         _available = false;
         StartCoroutine(nameof(KeepUsingEnergy));
     }
@@ -68,16 +69,21 @@ public class PlayerEnergy : Singleton<PlayerEnergy>
         }
     }
 
-    public void AccumulateEnergy(int value)
+    public void AccumulateEnergy(int value, bool combatReward = true)
     {
         if (_energy == MAX_ENERGY || !_available || !gameObject.activeSelf) return;
-        _energy = Mathf.Clamp(_energy + value, 0, MAX_ENERGY);
+        int bonus = combatReward && RunUpgradeController.Instance ? RunUpgradeController.Instance.Run.EnergyBonus : 0;
+        _energy = Mathf.Clamp(_energy + value + bonus, 0, MAX_ENERGY);
         energyBar.UpdateState(_energy, MAX_ENERGY);
     }
 
     public void UseEnergy(int value)
     {
-        _energy -= value;
+        int spent = Mathf.Min(_energy, Mathf.Max(0, value));
+        _energy -= spent;
+        var upgrades = RunUpgradeController.Instance;
+        if (GameManager.GameState == GameState.Play && upgrades && upgrades.Run.HasKineticBattery)
+            upgrades.Combat.AddCharge(spent);
         energyBar.UpdateState(_energy, MAX_ENERGY);
 
         if (_energy == 0 && !_available)

@@ -62,6 +62,18 @@ public class
     
     //禁用GamePlay输入方法
     public void DisableAllInput() => _inputActions.Disable();
+
+    // Read controls directly: disabling the gameplay map clears InputAction.IsPressed().
+    public bool IsFireControlHeld
+    {
+        get
+        {
+            foreach (var control in _inputActions.GamePlay.Fire.controls)
+                if (control is UnityEngine.InputSystem.Controls.ButtonControl button && button.isPressed)
+                    return true;
+            return false;
+        }
+    }
     
     //激活动作表方法
     public void EnableGamePlayInput()
@@ -71,6 +83,16 @@ public class
     }
     
     public void EnablePauseMenuInput() => SwitchInputActionMap(_inputActions.PauseMenu, true);
+
+    public void EnableUpgradeSelectionInput()
+    {
+        DisableAllInput();
+        SwitchToDynamicUpdateMode();
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        // The existing InputSystemUIInputModule owns navigation and submit.
+        // Do not enable PauseMenu: its Cancel action must not bypass the reward.
+    }
     
     public void EnableGameOverInput()
     {
