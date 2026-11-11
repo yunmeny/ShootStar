@@ -43,9 +43,11 @@ public class Loot : MonoBehaviour
     protected virtual IEnumerator MoveToPlayer()
     {
         var speed = Random.Range(minSpeed, maxSpeed);
-        while (gameObject.activeSelf && GameManager.GameState == GameState.Play)
+        while (gameObject.activeSelf)
         {
-            transform.position = Vector3.MoveTowards(transform.position, Player.transform.position, speed * Time.deltaTime);
+            if (GameManager.GameState == GameState.GameOver) yield break;
+            if (GameManager.GameState == GameState.Play)
+                transform.position = Vector3.MoveTowards(transform.position, Player.transform.position, speed * Time.deltaTime);
             yield return null;
         }   
     }

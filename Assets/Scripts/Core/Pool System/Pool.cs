@@ -118,6 +118,16 @@ public class Pool
         return prepareObject;
     }
 
+    // Configure per-shot state before OnEnable; activation must see the new position and snapshot.
+    public GameObject PrepareObject(Vector3 position, Quaternion rotation, System.Action<GameObject> configure)
+    {
+        var instance = AvailableObject();
+        instance.transform.SetPositionAndRotation(position, rotation);
+        configure(instance);
+        instance.SetActive(true);
+        return instance;
+    }
+
     // 返回对象池
     // public void Return(GameObject gameObject)
     // {

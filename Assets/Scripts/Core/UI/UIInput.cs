@@ -60,6 +60,18 @@ namespace Core.UI
         {
             _uiInputModule.enabled = false;
         }
+
+        public bool IsConfirmationHeld => playerInput.IsFireControlHeld ||
+            IsButtonHeld(_uiInputModule.submit?.action) || IsButtonHeld(_uiInputModule.leftClick?.action);
+
+        private static bool IsButtonHeld(InputAction action)
+        {
+            if (action == null) return false;
+            foreach (var control in action.controls)
+                if (control is UnityEngine.InputSystem.Controls.ButtonControl button && button.isPressed)
+                    return true;
+            return false;
+        }
         
         public void DisablePlayerInput()
         {

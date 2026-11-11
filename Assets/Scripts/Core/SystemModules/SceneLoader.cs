@@ -45,6 +45,8 @@ namespace Core.SystemModules
         public void LoadScene(string sceneName) => RequestScene(sceneName);
         public void LoadGamePlayScene() => RequestScene(GAMEPLAY_SCENE, GameMode.Story);
         public void LoadEndlessScene() => RequestScene(GAMEPLAY_SCENE, GameMode.Endless);
+        public void LoadBuildTestScene(BuildFocus focus = BuildFocus.MainGun) => RequestScene(GAMEPLAY_SCENE,
+            focus == BuildFocus.Missiles ? GameMode.MissileTest : focus == BuildFocus.Maneuver ? GameMode.ManeuverTest : GameMode.BuildTest);
         public void RetryGamePlayScene() => RequestScene(GAMEPLAY_SCENE, GameManager.Instance.Mode);
         public void LoadMainMenuScene() => RequestScene(MAIN_MENU_SCENE);
         public void LoadScoreScene() => RequestScene(SCORE_SCENE);

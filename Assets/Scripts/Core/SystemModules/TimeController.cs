@@ -28,6 +28,21 @@ namespace Core.SystemModules
 
         private void OnDestroy() => ResetTime();
 
+        public void BeginUpgradeSelection()
+        {
+            // Discard pending slow-motion routines so they cannot unfreeze the refit modal.
+            ResetTime();
+            GameManager.GameState = GameState.UpgradeSelection;
+            Time.timeScale = 0f;
+        }
+
+        public void EndUpgradeSelection()
+        {
+            if (GameManager.GameState != GameState.UpgradeSelection) return;
+            ResetTime();
+            GameManager.GameState = GameState.Play;
+        }
+
         public void Pause()
         {
             if (GameManager.GameState != GameState.Play) return;
@@ -86,7 +101,7 @@ namespace Core.SystemModules
             _t = 0;
             while (_t < 1)
             {
-                if (GameManager.GameState != GameState.Pause && GameManager.GameState != GameState.GameOver)
+                if (GameManager.GameState == GameState.Play)
                 {
                     // 使用帧间值确保不会受到TimeScale的影响
                     _t += Time.unscaledDeltaTime / duration;
@@ -102,7 +117,7 @@ namespace Core.SystemModules
             _t = 0;
             while (_t < 1)
             {
-                if (GameManager.GameState != GameState.Pause && GameManager.GameState != GameState.GameOver  && Time.timeScale != 0   )
+                if (GameManager.GameState == GameState.Play && Time.timeScale != 0)
                 {
                     _t += Time.unscaledDeltaTime / duration;
                     Time.timeScale = Mathf.Lerp(bulletTimeScale, 1, _t);
