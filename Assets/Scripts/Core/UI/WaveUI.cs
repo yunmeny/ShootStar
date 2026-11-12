@@ -16,7 +16,9 @@ public class WaveUI : MonoBehaviour
     void OnEnable()
     {
         int wave = EenemyManager.Instance.WaveNumber;
-        waveText.text = GameManager.Instance.IsBuildTest ?
+        waveText.text = GameManager.Instance.IsEncounterTest ?
+            (BuildTestChapter.IsBoss(wave) ? "- ENCOUNTERS / FINAL BOSS -" : "- ENCOUNTERS " + wave + " / 6 -") +
+            "\nSEED " + EenemyManager.Instance.EncounterSeed : GameManager.Instance.IsBuildTest ?
             (BuildTestChapter.IsBoss(wave) ? "- BUILD TEST / FINAL BOSS -" : "- BUILD TEST " + wave + " / 6 -") :
             "- WAVE " + wave + " -";
     }

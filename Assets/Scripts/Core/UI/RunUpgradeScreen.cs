@@ -14,6 +14,7 @@ namespace Core.UI
         private TextMeshProUGUI heading;
         private TextMeshProUGUI summary;
         private TextMeshProUGUI controls;
+        internal static TMP_FontAsset ChineseFont => Resources.Load<TMP_FontAsset>("Fonts/Text");
         private readonly UnityEngine.UI.Button[] buttons = new UnityEngine.UI.Button[3];
         private readonly TextMeshProUGUI[] labels = new TextMeshProUGUI[3];
 
@@ -34,7 +35,7 @@ namespace Core.UI
             backdrop.gameObject.AddComponent<UnityEngine.UI.Image>().color = new Color(0.015f, 0.025f, 0.055f, 0.96f);
             heading = Text("Heading", backdrop, new Vector2(0.08f, 0.77f), new Vector2(0.92f, 0.93f), 46);
             Text("Instruction", backdrop, new Vector2(0.08f, 0.68f), new Vector2(0.92f, 0.77f), 25).text =
-                "SALVAGED SHIP MODS  /  CHOOSE ONE TO CONTINUE";
+                "回收舰船组件 / 选择一项改装后继续";
 
             var cards = Rect("Choices", backdrop, new Vector2(0.08f, 0.26f), new Vector2(0.92f, 0.65f));
             var layout = cards.gameObject.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
@@ -79,23 +80,24 @@ namespace Core.UI
         {
             StopAllCoroutines();
             CanSelect = false;
-            controls.text = "RELEASE FIRE / CONFIRM TO SELECT A MOD";
+            controls.text = "请松开射击键和确认键，再选择改装";
             foreach (var button in buttons) button.interactable = false;
             if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
-            heading.text = "WAVE " + wave + " CLEAR  /  FIELD REFIT";
+            heading.text = "第 " + wave + " 波已清除 / 战地改装";
             for (int i = 0; i < choices.Length; i++)
             {
                 var choice = choices[i];
-                string rank = choice.IsService ? "SUPPLIES" : "RANK " + (run.Rank(choice.Id) + 1) + " / " + choice.MaxRank;
+                string rank = choice.IsService ? "即时补给" : "等级 " + (run.Rank(choice.Id) + 1) + " / " + choice.MaxRank;
                 labels[i].text = "<color=#67E4ED>" + rank + "</color>\n\n<b>" + choice.Title + "</b>\n\n" + choice.Description;
                 if (choice.Prerequisite.HasValue)
-                    labels[i].text += "\n\n<color=#67E4ED>REQUIRES " + RunUpgradeState.Definition(choice.Prerequisite.Value).Title + " (INSTALLED)</color>";
+                    labels[i].text += "\n\n<color=#67E4ED>前置：" + RunUpgradeState.Definition(choice.Prerequisite.Value).Title + "（已安装）</color>";
             }
-            summary.text = "INSTALLED " + run.Selections + "  |  MAIN GUN " + run.MainGunDamageMultiplier.ToString("0.00") +
-                "x  |  FIRE RATE " + run.FireRateMultiplier.ToString("0.00") + "x  |  HULL " + run.HullMultiplier.ToString("0.00") + "x\n" +
+            summary.text = "已改装 " + run.Selections + " 次  |  主炮伤害 " + run.MainGunDamageMultiplier.ToString("0.00") +
+                " 倍  |  射速 " + run.FireRateMultiplier.ToString("0.00") + " 倍  |  机体 " + run.HullMultiplier.ToString("0.00") + " 倍\n" +
                 BuildSummary(run);
-            if (GameManager.Instance.IsBuildTest)
-                heading.text = GameManager.Instance.TestFocus.ToString().ToUpperInvariant() + " TEST " + wave + " / 6 CLEAR";
+            if (GameManager.Instance.IsTestChapter)
+                heading.text = FocusName(GameManager.Instance.TestFocus) +
+                    (GameManager.Instance.IsEncounterTest ? "遭遇试炼 " : "改装试炼 ") + wave + " / 6 已完成";
             root.SetActive(true);
             if (UIInput.Instance) UIInput.Instance.EnableUIInput();
             StartCoroutine(ArmAfterRelease());
@@ -103,10 +105,21 @@ namespace Core.UI
 
         private static string BuildSummary(RunUpgradeState run)
         {
-            string main = run.HasSplit ? "PIERCE + FORK" : run.HasPierce ? "PIERCE" : "STANDARD";
-            string missile = run.HasReclaimer ? "RECLAIMER" : run.HasChainDetonation ? "CHAIN BLAST" : run.HasWideWarhead ? "WIDE BLAST" : "STANDARD";
-            string maneuver = run.HasOverdriveRelay ? "RELAY" : run.HasKineticBattery ? "BATTERY" : run.HasSlipstream ? "ROLL BOOST" : "STANDARD";
-            return "GUN: " + main + "  |  MISSILE: " + missile + "  |  MANEUVER: " + maneuver;
+            string main = run.HasSplit ? "穿透 + 分裂" : run.HasPierce ? "穿透" : "标准";
+            string missile = run.HasReclaimer ? "弹头回收" : run.HasChainDetonation ? "连锁引爆" : run.HasWideWarhead ? "扩域爆炸" : "标准";
+            string maneuver = run.HasOverdriveRelay ? "极速继电" : run.HasKineticBattery ? "动能电池" : run.HasSlipstream ? "翻滚加速" : "标准";
+            return "主炮：" + main + "  |  导弹：" + missile + "  |  机动：" + maneuver;
+        }
+
+        private static string FocusName(BuildFocus focus)
+        {
+            switch (focus)
+            {
+                case BuildFocus.MainGun: return "主炮";
+                case BuildFocus.Missiles: return "导弹";
+                case BuildFocus.Maneuver: return "机动";
+                default: return "";
+            }
         }
 
         private IEnumerator ArmAfterRelease()
@@ -123,7 +136,7 @@ namespace Core.UI
 
             foreach (var button in buttons) button.interactable = true;
             CanSelect = true;
-            controls.text = "CLICK TO INSTALL  /  ARROWS OR D-PAD + SUBMIT\nMODS LAST FOR THIS RUN. FIRE AGAIN AFTER REFIT.";
+            controls.text = "点击安装 / 方向键或手柄十字键选择，确认键安装\n改装仅在本局生效。完成后需重新按下射击键。";
             if (UIInput.Instance) UIInput.Instance.SelectUI(buttons[0]);
         }
 
@@ -148,6 +161,7 @@ namespace Core.UI
         private static TextMeshProUGUI Text(string name, Transform parent, Vector2 min, Vector2 max, float size)
         {
             var text = Rect(name, parent, min, max).gameObject.AddComponent<TextMeshProUGUI>();
+            text.font = ChineseFont;
             text.fontSize = size;
             text.color = new Color(0.92f, 0.96f, 1f);
             text.alignment = TextAlignmentOptions.Center;

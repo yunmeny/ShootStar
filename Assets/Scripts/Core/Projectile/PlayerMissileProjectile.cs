@@ -67,7 +67,7 @@ public class PlayerMissileProjectile : PlayerTraceProjectile
         {
             int refund = reclaimerEnabled ? owner.Combat.RecordMissileKills(blast.Kills) : 0;
             if (refund > 0) FindFirstObjectByType<MissileSystem>()?.AddMissile(refund);
-            owner.ReportCombatEvent("MISSILE / CHAIN " + secondaryCount + " / KILLS " + blast.Kills + (refund > 0 ? " / +1 AMMO" : ""));
+            owner.ReportCombatEvent("导弹 / 二次爆炸 " + secondaryCount + " / 击杀 " + blast.Kills + (refund > 0 ? " / 导弹 +1" : ""));
         }
     }
 

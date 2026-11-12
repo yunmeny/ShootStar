@@ -10,6 +10,10 @@ namespace Core.SystemModules
 
         public int WaveNumber => _waveNumber;
         public float TimeBetweenWave => timeBetweenWave;
+        public float EncounterElapsed { get; private set; }
+        public string EncounterStatus { get; private set; }
+        public string EncounterHint { get; private set; }
+        public int EncounterSeed => encounterSeed;
 
         [SerializeField] bool spawnEnemy = true;
         [SerializeField] GameObject waveUI;
@@ -20,11 +24,44 @@ namespace Core.SystemModules
         [SerializeField] int maxEnemyAmount = 10;
         [SerializeField] int minEnemyAmount = 3;
         [SerializeField] int bossWaveNumber = 3;
+        [SerializeField] int encounterSeed = EncounterChapter.DefaultSeed;
 
         List<GameObject> _enemyList;
         int _waveNumber = 1;
         int _enemyAmount = 0;
         RunUpgradeController _upgrades;
+        readonly List<GameObject> _encounterProjectiles = new List<GameObject>();
+        bool _encounterRunning;
+        float _nextEncounterVolley;
+
+        void Update()
+        {
+            if (_encounterRunning && GameManager.GameState == GameState.Play)
+                EncounterElapsed += Time.deltaTime;
+        }
+
+        public bool TryEncounterVolley(int projectileCount)
+        {
+            _encounterProjectiles.RemoveAll(item => !item || !item.activeInHierarchy);
+            if (!_encounterRunning || GameManager.GameState != GameState.Play || projectileCount <= 0 ||
+                projectileCount > EncounterChapter.MaxVolleyProjectiles || EncounterElapsed < _nextEncounterVolley ||
+                _encounterProjectiles.Count + projectileCount > EncounterChapter.MaxActiveProjectiles) return false;
+            _nextEncounterVolley = EncounterElapsed + EncounterChapter.MinVolleyGap;
+            return true;
+        }
+
+        public void TrackEncounterProjectile(GameObject projectile)
+        {
+            _encounterProjectiles.Remove(projectile);
+            _encounterProjectiles.Add(projectile);
+        }
+
+        void ClearEncounterProjectiles()
+        {
+            foreach (var projectile in _encounterProjectiles)
+                if (projectile) projectile.SetActive(false);
+            _encounterProjectiles.Clear();
+        }
 
         WaitForSeconds _waitTimeBetweenSpawn;
         WaitForSeconds _waitTimeBetweenWave;
@@ -43,11 +80,17 @@ namespace Core.SystemModules
         }
 
         void OnEnable() => GameManager.onGameOver += StopSpawning;
-        void OnDisable() => GameManager.onGameOver -= StopSpawning;
+        void OnDisable()
+        {
+            GameManager.onGameOver -= StopSpawning;
+            StopSpawning();
+        }
 
         void StopSpawning()
         {
             StopAllCoroutines();
+            _encounterRunning = false;
+            ClearEncounterProjectiles();
             if (waveUI) waveUI.SetActive(false);
         }
 
@@ -55,13 +98,15 @@ namespace Core.SystemModules
         {
             while (spawnEnemy && GameManager.GameState != GameState.GameOver)
             {
+                EncounterStatus = "准备入场";
+                EncounterHint = null;
                 waveUI.SetActive(true);
                 yield return _waitTimeBetweenWave;
                 waveUI.SetActive(false);
                 if (GameManager.GameState == GameState.GameOver) yield break;
                 yield return StartCoroutine(nameof(RandomlySpawnEnemyCoroutine));
                 if ((GameManager.Instance.Mode == GameMode.Story && _waveNumber > Mathf.Max(1, bossWaveNumber)) ||
-                    (GameManager.Instance.IsBuildTest && BuildTestChapter.IsComplete(_waveNumber)))
+                    (GameManager.Instance.IsTestChapter && BuildTestChapter.IsComplete(_waveNumber)))
                 {
                     GameManager.Instance.EndRun(true);
                     yield break;
@@ -74,9 +119,16 @@ namespace Core.SystemModules
         IEnumerator RandomlySpawnEnemyCoroutine()
         {
             bool buildTest = GameManager.Instance.IsBuildTest;
-            if (buildTest ? BuildTestChapter.IsBoss(_waveNumber) : _waveNumber % Mathf.Max(1, bossWaveNumber) == 0)
+            bool encounterTest = GameManager.Instance.IsEncounterTest;
+            if (GameManager.Instance.IsTestChapter ? BuildTestChapter.IsBoss(_waveNumber) : _waveNumber % Mathf.Max(1, bossWaveNumber) == 0)
             {
+                EncounterStatus = "最终 Boss";
+                EncounterHint = "观察现有弹幕与蓄力激光预警";
                 _enemyList.Add(PoolManger.Release(boss));
+            }
+            else if (encounterTest)
+            {
+                yield return SpawnEncounterWave();
             }
             else
             {
@@ -101,6 +153,31 @@ namespace Core.SystemModules
             yield return _waitUntilAllEnemyDead;
         
             _waveNumber++;
+        }
+
+        IEnumerator SpawnEncounterWave()
+        {
+            var plans = EncounterChapter.CreateWave(_waveNumber, encounterSeed, enemies.Length);
+            for (int phase = 0; phase < plans.Length; phase++)
+            {
+                var plan = plans[phase];
+                EncounterStatus = EncounterChapter.Name(plan.Kind) + "  " + (phase + 1) + "/" + plans.Length;
+                EncounterHint = EncounterChapter.Hint(plan.Kind);
+                EncounterElapsed = 0f;
+                _nextEncounterVolley = 0f;
+                _encounterRunning = true;
+                foreach (var spawn in plan.Spawns)
+                {
+                    yield return new WaitUntil(() => EncounterElapsed >= spawn.SpawnAt && _enemyList.Count < EncounterChapter.MaxActiveEnemies);
+                    var enemy = PoolManger.Release(enemies[spawn.EnemyIndex], Vector3.zero, Quaternion.identity,
+                        instance => instance.GetComponent<EnemyController>().ConfigureEncounter(spawn, this));
+                    _enemyList.Add(enemy);
+                }
+                yield return _waitUntilAllEnemyDead;
+                _encounterRunning = false;
+                ClearEncounterProjectiles();
+                if (phase + 1 < plans.Length) yield return new WaitForSeconds(1.2f);
+            }
         }
     
         public void RemoveEnemyFromList(GameObject enemy) => _enemyList.Remove(enemy);
