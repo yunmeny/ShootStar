@@ -31,24 +31,24 @@ namespace Core.SystemModules
     {
         public static readonly IReadOnlyList<RunUpgradeDefinition> Catalog = Array.AsReadOnly(new[]
         {
-            new RunUpgradeDefinition(RunUpgradeId.Weapons, "HEAVY CALIBER", "+20% weapon damage per rank.\nIncludes missile impact and explosion damage.", 5),
-            new RunUpgradeDefinition(RunUpgradeId.RapidFire, "RAPID CHAMBER", "+15% main gun fire rate per rank.\nAlso improves Overdrive fire rate.", 5),
-            new RunUpgradeDefinition(RunUpgradeId.Hull, "REINFORCED HULL", "+20% base maximum hull per rank.\nRepair the same amount immediately.", 5),
-            new RunUpgradeDefinition(RunUpgradeId.Dodge, "EFFICIENT ROLL", "Rolling costs 15% less base energy per rank.\nOverdrive's cost modifier still applies.", 4),
-            new RunUpgradeDefinition(RunUpgradeId.Thrusters, "VECTOR THRUSTERS", "+10% movement speed per rank.\nStacks with Overdrive's speed bonus.", 4),
-            new RunUpgradeDefinition(RunUpgradeId.Capacitor, "COMBAT CAPACITOR", "+1 energy per hit or kill per rank.\nEnergy cannot recharge during Overdrive.", 4),
-            new RunUpgradeDefinition(RunUpgradeId.Pierce, "PIERCING ROUNDS", "Main gun shots pass through one enemy.\nEach shot can hit up to two different enemies.\nAlso works during Overdrive.", 1),
-            new RunUpgradeDefinition(RunUpgradeId.Split, "FORKED ROUNDS", "First piercing hit releases two side shots.\nEach deals 40% of the parent shot's damage.\nMain gun damage -15%; side shots cannot fork.", 1, RunUpgradeId.Pierce),
-            new RunUpgradeDefinition(RunUpgradeId.BlastRadius, "WIDE WARHEAD", "Missile blast radius +50%.\nLauncher cooldown +25%.\nEvery refit supplies 2 missiles.", 1),
-            new RunUpgradeDefinition(RunUpgradeId.ClusterWarhead, "CHAIN DETONATION", "Missile kills cause up to 4 secondary blasts.\nEach deals 60% blast damage at 75% radius.\nSecondary blasts cannot chain again.", 1, RunUpgradeId.BlastRadius),
-            new RunUpgradeDefinition(RunUpgradeId.Reclaimer, "WARHEAD RECLAIMER", "Every 3 missile kills return 1 missile.\nIncludes secondary blast kills.\nAt most 1 missile returned per detonation.", 1, RunUpgradeId.ClusterWarhead),
-            new RunUpgradeDefinition(RunUpgradeId.Slipstream, "ROLL ACCELERATOR", "After a roll: +50% fire rate for 2.5 seconds.\nRolling costs 20% more energy.\nFurther rolls refresh the duration.", 1),
-            new RunUpgradeDefinition(RunUpgradeId.KineticBattery, "KINETIC BATTERY", "Roll and Overdrive energy builds charge (100 max).\nNext main gun volley consumes it: up to +200% damage.\nStop firing to save a stronger volley.", 1, RunUpgradeId.Slipstream),
-            new RunUpgradeDefinition(RunUpgradeId.OverdriveRelay, "OVERDRIVE RELAY", "Entering Overdrive adds 50 charge.\nLeaving Overdrive grants the roll fire-rate boost.\nOverdrive still cannot recharge energy.", 1, RunUpgradeId.KineticBattery),
+            new RunUpgradeDefinition(RunUpgradeId.Weapons, "大口径弹药", "每级武器伤害 +20%。\n对导弹直击和爆炸伤害同样生效。", 5),
+            new RunUpgradeDefinition(RunUpgradeId.RapidFire, "快速供弹", "每级主炮射速 +15%。\n对极速模式下的射速同样生效。", 5),
+            new RunUpgradeDefinition(RunUpgradeId.Hull, "强化机体", "每级增加基础机体上限的 20%。\n立即恢复等量生命值。", 5),
+            new RunUpgradeDefinition(RunUpgradeId.Dodge, "节能翻滚", "每级减少基础翻滚能耗的 15%。\n仍受极速模式的能耗倍率影响。", 4),
+            new RunUpgradeDefinition(RunUpgradeId.Thrusters, "矢量推进器", "每级移动速度 +10%。\n可与极速模式的速度加成叠加。", 4),
+            new RunUpgradeDefinition(RunUpgradeId.Capacitor, "战斗电容", "每级使命中或击杀额外恢复 1 点能量。\n极速模式期间无法恢复能量。", 4),
+            new RunUpgradeDefinition(RunUpgradeId.Pierce, "穿透弹", "主炮子弹可穿透一个敌人。\n每发最多命中两个不同敌人。\n极速模式下同样生效。", 1),
+            new RunUpgradeDefinition(RunUpgradeId.Split, "分裂弹", "首次穿透命中时发射两枚侧向子弹。\n每枚造成原弹伤害的 40%。\n主炮伤害 -15%，侧向子弹无法再次分裂。", 1, RunUpgradeId.Pierce),
+            new RunUpgradeDefinition(RunUpgradeId.BlastRadius, "扩域弹头", "导弹爆炸半径 +50%。\n发射冷却时间 +25%。\n每次改装额外补给 2 枚导弹。", 1),
+            new RunUpgradeDefinition(RunUpgradeId.ClusterWarhead, "连锁引爆", "导弹击杀最多触发 4 次二次爆炸。\n每次造成 60% 爆炸伤害，半径为原来的 75%。\n二次爆炸无法再次触发连锁。", 1, RunUpgradeId.BlastRadius),
+            new RunUpgradeDefinition(RunUpgradeId.Reclaimer, "弹头回收器", "导弹每击杀 3 个敌人返还 1 枚导弹。\n二次爆炸的击杀同样计入。\n每次引爆最多返还 1 枚导弹。", 1, RunUpgradeId.ClusterWarhead),
+            new RunUpgradeDefinition(RunUpgradeId.Slipstream, "翻滚加速器", "翻滚后射速 +50%，持续 2.5 秒。\n翻滚能耗 +20%。\n再次翻滚会刷新持续时间。", 1),
+            new RunUpgradeDefinition(RunUpgradeId.KineticBattery, "动能电池", "翻滚及极速模式的能量消耗转化为充能，最多 100 点。\n下轮主炮齐射消耗全部充能，伤害最高 +200%。\n停止射击可积攒更强的齐射。", 1, RunUpgradeId.Slipstream),
+            new RunUpgradeDefinition(RunUpgradeId.OverdriveRelay, "极速继电器", "进入极速模式时获得 50 点充能。\n退出极速模式时获得翻滚射速加成。\n极速模式期间仍无法恢复能量。", 1, RunUpgradeId.KineticBattery),
             // Repeatable supplies keep three distinct choices available in long endless runs.
-            new RunUpgradeDefinition(RunUpgradeId.Repair, "FIELD REPAIR", "Restore 50% of maximum hull.\nOne-time service; does not increase maximum hull.", 0),
-            new RunUpgradeDefinition(RunUpgradeId.Missiles, "MISSILE CACHE", "Receive 5 missiles.\nOne-time service.", 0),
-            new RunUpgradeDefinition(RunUpgradeId.Energy, "ENERGY CELL", "Restore 50 energy after leaving refit.\nOne-time service; ends the current Overdrive.", 0)
+            new RunUpgradeDefinition(RunUpgradeId.Repair, "战地维修", "立即恢复机体上限 50% 的生命值。\n即时补给，不增加机体上限。", 0),
+            new RunUpgradeDefinition(RunUpgradeId.Missiles, "导弹补给", "立即获得 5 枚导弹。\n即时补给。", 0),
+            new RunUpgradeDefinition(RunUpgradeId.Energy, "能量电池", "完成改装后恢复 50 点能量。\n即时补给，并结束当前极速模式。", 0)
         });
 
         private readonly Dictionary<RunUpgradeId, int> ranks = new Dictionary<RunUpgradeId, int>();

@@ -15,8 +15,8 @@ namespace Core.SystemModules
         private UnityEngine.UI.Button buildTestButton;
         private readonly System.Collections.Generic.Dictionary<UnityEngine.UI.Button, string> originalLabels =
             new System.Collections.Generic.Dictionary<UnityEngine.UI.Button, string>();
-        private readonly System.Collections.Generic.Dictionary<UnityEngine.UI.Button, (float spacing, bool autoSize)> originalTextStyle =
-            new System.Collections.Generic.Dictionary<UnityEngine.UI.Button, (float spacing, bool autoSize)>();
+        private readonly System.Collections.Generic.Dictionary<UnityEngine.UI.Button, (float spacing, bool autoSize, bool wrapping)> originalTextStyle =
+            new System.Collections.Generic.Dictionary<UnityEngine.UI.Button, (float spacing, bool autoSize, bool wrapping)>();
 
         private void Awake()
         {
@@ -34,7 +34,7 @@ namespace Core.SystemModules
                 var tmp = button.GetComponentInChildren<TMPro.TMP_Text>(true);
                 var text = button.GetComponentInChildren<UnityEngine.UI.Text>(true);
                 originalLabels[button] = tmp ? tmp.text : text ? text.text : button.name;
-                if (tmp) originalTextStyle[button] = (tmp.characterSpacing, tmp.enableAutoSizing);
+                if (tmp) originalTextStyle[button] = (tmp.characterSpacing, tmp.enableAutoSizing, tmp.enableWordWrapping);
             }
             // The source button's animation callback is mapped below, just like the other modes.
         }
@@ -87,12 +87,25 @@ namespace Core.SystemModules
             SetTestLabel(storyButton, "MAIN GUN");
             SetTestLabel(endlessButton, "MISSILES");
             SetTestLabel(buildTestButton, "MANEUVER");
-            SetTestLabel(optionButton, "BACK");
-            exitButton.gameObject.SetActive(false);
+            SetTestLabel(optionButton, "ENCOUNTERS");
+            SetTestLabel(exitButton, "BACK");
+            exitButton.gameObject.SetActive(true);
             ButtonPressedState.ButtonFunctionTable[storyButton] = () => SceneLoader.Instance.LoadBuildTestScene(BuildFocus.MainGun);
             ButtonPressedState.ButtonFunctionTable[endlessButton] = () => SceneLoader.Instance.LoadBuildTestScene(BuildFocus.Missiles);
             ButtonPressedState.ButtonFunctionTable[buildTestButton] = () => SceneLoader.Instance.LoadBuildTestScene(BuildFocus.Maneuver);
-            ButtonPressedState.ButtonFunctionTable[optionButton] = CloseBuildChoices;
+            ButtonPressedState.ButtonFunctionTable[optionButton] = OpenEncounterChoices;
+            ButtonPressedState.ButtonFunctionTable[exitButton] = CloseBuildChoices;
+            UIInput.Instance.SelectUI(storyButton);
+        }
+
+        private void OpenEncounterChoices()
+        {
+            SetTestLabel(optionButton, "BACK");
+            exitButton.gameObject.SetActive(false);
+            ButtonPressedState.ButtonFunctionTable[storyButton] = () => SceneLoader.Instance.LoadEncounterTestScene(BuildFocus.MainGun);
+            ButtonPressedState.ButtonFunctionTable[endlessButton] = () => SceneLoader.Instance.LoadEncounterTestScene(BuildFocus.Missiles);
+            ButtonPressedState.ButtonFunctionTable[buildTestButton] = () => SceneLoader.Instance.LoadEncounterTestScene(BuildFocus.Maneuver);
+            ButtonPressedState.ButtonFunctionTable[optionButton] = OnBuildTestButtonClick;
             UIInput.Instance.SelectUI(storyButton);
         }
 
@@ -104,12 +117,14 @@ namespace Core.SystemModules
                 var label = entry.Key.GetComponentInChildren<TMPro.TMP_Text>(true);
                 label.characterSpacing = entry.Value.spacing;
                 label.enableAutoSizing = entry.Value.autoSize;
+                label.enableWordWrapping = entry.Value.wrapping;
             }
             exitButton.gameObject.SetActive(true);
             ButtonPressedState.ButtonFunctionTable[storyButton] = OnStoryButtonClick;
             ButtonPressedState.ButtonFunctionTable[endlessButton] = OnEndlessButtonClick;
             ButtonPressedState.ButtonFunctionTable[buildTestButton] = OnBuildTestButtonClick;
             ButtonPressedState.ButtonFunctionTable[optionButton] = OnOptionButtonClick;
+            ButtonPressedState.ButtonFunctionTable[exitButton] = OnExitButtonClick;
             UIInput.Instance.SelectUI(buildTestButton);
         }
 
@@ -128,6 +143,7 @@ namespace Core.SystemModules
             if (!label) return;
             label.characterSpacing = 0f;
             label.enableAutoSizing = true;
+            label.enableWordWrapping = false;
             label.fontSizeMin = 28;
             label.fontSizeMax = 70;
         }

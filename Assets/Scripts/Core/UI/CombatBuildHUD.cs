@@ -24,6 +24,7 @@ namespace Core.UI
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 0.5f;
             status = new GameObject("BuildStatus", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
+            status.font = RunUpgradeScreen.ChineseFont;
             var rect = status.rectTransform;
             rect.SetParent(root.transform, false);
             rect.anchorMin = new Vector2(0.24f, 0.88f);
@@ -43,10 +44,16 @@ namespace Core.UI
             nextRefresh = Time.unscaledTime + 0.1f;
             var run = upgrades.Run;
             string text = "";
-            if (run.HasSlipstream) text = "ROLL BOOST " + upgrades.Combat.BoostRemaining.ToString("0.0") + "s";
-            if (run.HasKineticBattery) text += "  |  CHARGE " + upgrades.Combat.Charge + "/100";
-            if (run.HasReclaimer) text += "  |  AMMO RECOVERY " + upgrades.Combat.ReclaimerProgress + "/3";
+            if (run.HasSlipstream) text = "翻滚加速 " + upgrades.Combat.BoostRemaining.ToString("0.0") + " 秒";
+            if (run.HasKineticBattery) text += "  |  充能 " + upgrades.Combat.Charge + "/100";
+            if (run.HasReclaimer) text += "  |  导弹回收 " + upgrades.Combat.ReclaimerProgress + "/3";
             if (!string.IsNullOrEmpty(upgrades.CombatMessage)) text += "\n" + upgrades.CombatMessage;
+            if (GameManager.Instance.IsEncounterTest)
+            {
+                var director = EenemyManager.Instance;
+                text = "遭遇测试 " + director.WaveNumber + "/7  |  SEED " + director.EncounterSeed +
+                    "  |  " + director.EncounterStatus + "\n" + director.EncounterHint + "\n" + text;
+            }
             status.text = text;
         }
     }

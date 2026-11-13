@@ -10,8 +10,11 @@ namespace Core.SystemModules
         public GameMode Mode { get; private set; } = GameMode.Story;
         public bool Victory { get; private set; }
         public bool IsBuildTest => Mode == GameMode.BuildTest || Mode == GameMode.MissileTest || Mode == GameMode.ManeuverTest;
-        public BuildFocus TestFocus => Mode == GameMode.BuildTest ? BuildFocus.MainGun :
-            Mode == GameMode.MissileTest ? BuildFocus.Missiles : Mode == GameMode.ManeuverTest ? BuildFocus.Maneuver : BuildFocus.None;
+        public bool IsEncounterTest => Mode == GameMode.EncounterMainGun || Mode == GameMode.EncounterMissiles || Mode == GameMode.EncounterManeuver;
+        public bool IsTestChapter => IsBuildTest || IsEncounterTest;
+        public BuildFocus TestFocus => Mode == GameMode.BuildTest || Mode == GameMode.EncounterMainGun ? BuildFocus.MainGun :
+            Mode == GameMode.MissileTest || Mode == GameMode.EncounterMissiles ? BuildFocus.Missiles :
+            Mode == GameMode.ManeuverTest || Mode == GameMode.EncounterManeuver ? BuildFocus.Maneuver : BuildFocus.None;
 
         public void BeginRun(GameMode mode)
         {
@@ -33,6 +36,6 @@ namespace Core.SystemModules
         }
     }
 
-    public enum GameMode { Story, Endless, BuildTest, MissileTest, ManeuverTest }
+    public enum GameMode { Story, Endless, BuildTest, MissileTest, ManeuverTest, EncounterMainGun, EncounterMissiles, EncounterManeuver }
     public enum GameState { Start, Play, Pause, GameOver, Scoring, Options, UpgradeSelection }
 }

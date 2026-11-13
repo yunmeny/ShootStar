@@ -150,7 +150,11 @@ public class Player : Character
         StopCoroutine(nameof(WaitForVelocityZero));
         StopCoroutine(nameof(MovePositionLimitCoroutine));
         moveDirection = Vector2.zero;
+#if UNITY_6000_0_OR_NEWER
         _rigidbody.linearVelocity = Vector2.zero;
+#else
+        _rigidbody.velocity = Vector2.zero;
+#endif
     }
 
     public void EndUpgradeSelection() => Input.EnableGamePlayInput();
