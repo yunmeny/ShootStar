@@ -14,6 +14,7 @@ namespace Core.SystemModules
         public string EncounterStatus { get; private set; }
         public string EncounterHint { get; private set; }
         public int EncounterSeed => encounterSeed;
+        public int EncounterEscaped { get; private set; }
 
         [SerializeField] bool spawnEnemy = true;
         [SerializeField] GameObject waveUI;
@@ -169,9 +170,12 @@ namespace Core.SystemModules
                 foreach (var spawn in plan.Spawns)
                 {
                     yield return new WaitUntil(() => EncounterElapsed >= spawn.SpawnAt && _enemyList.Count < EncounterChapter.MaxActiveEnemies);
-                    var enemy = PoolManger.Release(enemies[spawn.EnemyIndex], Vector3.zero, Quaternion.identity,
-                        instance => instance.GetComponent<EnemyController>().ConfigureEncounter(spawn, this));
-                    _enemyList.Add(enemy);
+                    PoolManger.Release(enemies[spawn.EnemyIndex], Vector3.zero, Quaternion.identity, instance =>
+                    {
+                        instance.GetComponent<EnemyController>().ConfigureEncounter(spawn, this);
+                        // Register before OnEnable: a late spawn can already be past its exit time.
+                        _enemyList.Add(instance);
+                    });
                 }
                 yield return _waitUntilAllEnemyDead;
                 _encounterRunning = false;
@@ -181,5 +185,10 @@ namespace Core.SystemModules
         }
     
         public void RemoveEnemyFromList(GameObject enemy) => _enemyList.Remove(enemy);
+
+        public void RemoveEscapedEnemy(GameObject enemy)
+        {
+            if (_enemyList.Remove(enemy)) EncounterEscaped++;
+        }
     }
 }

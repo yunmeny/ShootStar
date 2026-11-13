@@ -52,7 +52,7 @@ namespace Core.UI
             {
                 var director = EenemyManager.Instance;
                 text = "遭遇测试 " + director.WaveNumber + "/7  |  SEED " + director.EncounterSeed +
-                    "  |  " + director.EncounterStatus + "\n" + director.EncounterHint + "\n" + text;
+                    "  |  撤离 " + director.EncounterEscaped + "  |  " + director.EncounterStatus + "\n" + director.EncounterHint + "\n" + text;
             }
             status.text = text;
         }

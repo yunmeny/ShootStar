@@ -2,25 +2,30 @@ using System;
 
 namespace Core.SystemModules
 {
-    public enum EncounterKind { DepthFormation, DenseCluster, StaggeredCrossfire, Escort }
+    public enum EncounterKind { LaneStream, VerticalColumn, ParallelLanes, MixedSpeedPass }
 
-    // Data only: no Unity random state, player resources, or reward draws affect a plan.
+    // Data only. Coordinates use the complete viewport, including off-screen entry/exit.
     public sealed class EncounterSpawn
     {
         public readonly int EnemyIndex;
-        public readonly float SpawnAt, X, Y, SpreadX, SpreadY, FireAt, FireEvery;
+        public readonly float SpawnAt, Y, Speed, FireAt, FireEvery;
+        public readonly EncounterKind Kind;
+        public float EntryAt => SpawnAt + (EncounterMotion.StartX - 1f) / Speed;
+        public float ExitAt => SpawnAt + EncounterMotion.StartX / Speed;
+        public float CompleteAt => SpawnAt + (EncounterMotion.StartX - EncounterMotion.EndX) / Speed;
 
-        public EncounterSpawn(int enemyIndex, float spawnAt, float x, float y,
-            float spreadX, float spreadY, float fireAt, float fireEvery)
+        public EncounterSpawn(int enemyIndex, float spawnAt, float y, float speed,
+            float fireAt, float fireEvery, EncounterKind kind)
         {
+            if (speed <= 0f || float.IsNaN(speed) || float.IsInfinity(speed))
+                throw new ArgumentOutOfRangeException(nameof(speed));
             EnemyIndex = enemyIndex;
             SpawnAt = spawnAt;
-            X = x;
             Y = y;
-            SpreadX = spreadX;
-            SpreadY = spreadY;
+            Speed = speed;
             FireAt = fireAt;
             FireEvery = fireEvery;
+            Kind = kind;
         }
     }
 
@@ -37,11 +42,11 @@ namespace Core.SystemModules
         public const int MaxActiveEnemies = 6;
         public const int MaxActiveProjectiles = 18;
         public const int MaxVolleyProjectiles = 3;
-        public const float EntryDuration = 1.8f;
-        public const float ClusterSpreadAt = 5f;
-        public const float ClusterSpreadDuration = 2.5f;
-        public const float WarningDuration = 0.65f;
         public const float MinVolleyGap = 0.8f;
+        // Visual fits, in viewport widths/second, NOT extracted original game parameters.
+        // Reference: Binary Stars gameplay RQnRHWoOZ2Y, 1:18-1:21 and 4:38-4:49.
+        public const float SmallShipSpeed = 0.164f;
+        public const float SlowShipSpeed = 0.052f;
 
         public static EncounterPlan[] CreateWave(int wave, int seed, int enemyTypes)
         {
@@ -50,13 +55,13 @@ namespace Core.SystemModules
             EncounterKind[] kinds;
             switch (wave)
             {
-                case 1: kinds = new[] { EncounterKind.DepthFormation }; break;
-                case 2: kinds = new[] { EncounterKind.DenseCluster }; break;
-                case 3: kinds = new[] { EncounterKind.StaggeredCrossfire }; break;
-                case 4: kinds = new[] { EncounterKind.Escort }; break;
-                case 5: kinds = new[] { EncounterKind.DepthFormation, EncounterKind.DenseCluster }; break;
-                default: kinds = new[] { EncounterKind.DepthFormation, EncounterKind.StaggeredCrossfire,
-                    EncounterKind.DenseCluster, EncounterKind.Escort }; break;
+                case 1: kinds = new[] { EncounterKind.LaneStream }; break;
+                case 2: kinds = new[] { EncounterKind.VerticalColumn }; break;
+                case 3: kinds = new[] { EncounterKind.ParallelLanes }; break;
+                case 4: kinds = new[] { EncounterKind.MixedSpeedPass }; break;
+                case 5: kinds = new[] { EncounterKind.LaneStream, EncounterKind.VerticalColumn }; break;
+                default: kinds = new[] { EncounterKind.LaneStream, EncounterKind.ParallelLanes,
+                    EncounterKind.VerticalColumn, EncounterKind.MixedSpeedPass }; break;
             }
             var result = new EncounterPlan[kinds.Length];
             for (int i = 0; i < kinds.Length; i++) result[i] = Create(kinds[i], seed, wave, i, enemyTypes);
@@ -65,45 +70,43 @@ namespace Core.SystemModules
 
         private static EncounterPlan Create(EncounterKind kind, int seed, int wave, int phase, int enemyTypes)
         {
-            int count = kind == EncounterKind.DenseCluster ? 5 : 4;
+            int count = kind == EncounterKind.MixedSpeedPass ? 5 : 4;
             var spawns = new EncounterSpawn[count];
-            // An explicit integer hash keeps compositions stable across runtime versions as well.
             uint hash = unchecked((uint)seed * 1664525u + (uint)wave * 1013904223u + (uint)phase * 747796405u);
-            int offset = (int)(hash % (uint)enemyTypes);
+            int hull = (int)(hash % (uint)enemyTypes);
             for (int i = 0; i < count; i++)
             {
-                float spawn = 0f, x = 0f, y = 0f, sx = 0f, sy = 0f;
-                float fire = 3.4f + i * 0.9f;
+                float spawn, y, speed = SmallShipSpeed;
+                int type = hull;
                 switch (kind)
                 {
-                    case EncounterKind.DepthFormation:
-                        spawn = (i / 2) * 2.2f + (i % 2) * 0.2f;
-                        x = i % 2 == 0 ? 0.28f : 0.72f;
-                        y = i / 2 == 0 ? 0.32f : 0.68f;
-                        fire = 3.4f + i * 0.9f;
+                    case EncounterKind.LaneStream:
+                        // 1:16-1:21: a horizontal train; no stop, oscillation or return to the right.
+                        spawn = i * 0.8f;
+                        y = 0.88f;
                         break;
-                    case EncounterKind.DenseCluster:
-                        spawn = i * 0.12f;
-                        x = 0.50f + (i % 2) * 0.18f;
-                        y = 0.40f + (i / 2) * 0.10f;
+                    case EncounterKind.VerticalColumn:
+                        // 4:47-4:49: four visible ships form a vertical column and keep their lanes.
+                        spawn = 0f;
+                        y = 0.92f - i * 0.14f;
                         break;
-                    case EncounterKind.StaggeredCrossfire:
-                        spawn = i * 0.4f;
-                        x = 0.30f + (i / 2) * 0.38f;
-                        y = i % 2 == 0 ? 0.25f : 0.75f;
-                        // Upper/lower lines alternate, with a central corridor during entry.
+                    case EncounterKind.ParallelLanes:
+                        // 1:16-1:21: upper and lower ships cross simultaneously, keeping their lanes.
+                        spawn = (i / 2) * 0.8f;
+                        y = i % 2 == 0 ? 0.88f : 0.18f;
                         break;
-                    case EncounterKind.Escort:
-                        spawn = i * 0.25f;
-                        x = i == 0 ? 0.70f : 0.28f + (i == 2 ? 0.10f : 0f);
-                        y = i == 0 || i == 2 ? 0.50f : i == 1 ? 0.25f : 0.75f;
+                    default:
+                        // 4:38-4:49: a slow pass overlaps a later fast column. No invented escort orbit.
+                        spawn = i == 0 ? 0f : 18f;
+                        y = i == 0 ? 0.75f : 0.92f - (i - 1) * 0.14f;
+                        if (i == 0) speed = SlowShipSpeed;
+                        else type = (hull + 1) % enemyTypes;
                         break;
                 }
-                sx = kind == EncounterKind.DenseCluster ? 0.26f + (i % 2) * 0.42f : x;
-                sy = kind == EncounterKind.DenseCluster ? 0.20f + i * 0.15f : y;
-                // Aligned depth pairs share a hull type; other templates mix all existing hulls.
-                int type = (offset + (kind == EncounterKind.DepthFormation ? i / 2 : i)) % enemyTypes;
-                spawns[i] = new EncounterSpawn(type, spawn, x, y, sx, sy, fire, count * 0.9f + 1.8f);
+                // Keep ShootStar's existing projectile budget and staggered firing policy.
+                // Movement is independent of shots, so a denied volley cannot hold or turn a ship.
+                float fire = spawn + (EncounterMotion.StartX - 1f) / speed + 0.6f + i * 0.9f;
+                spawns[i] = new EncounterSpawn(type, spawn, y, speed, fire, count * 0.9f + 1.8f, kind);
             }
             return new EncounterPlan(kind, spawns);
         }
@@ -112,10 +115,10 @@ namespace Core.SystemModules
         {
             switch (kind)
             {
-                case EncounterKind.DepthFormation: return "纵深编队";
-                case EncounterKind.DenseCluster: return "密集集群";
-                case EncounterKind.StaggeredCrossfire: return "错位交火";
-                default: return "护航编队（普通领机）";
+                case EncounterKind.LaneStream: return "单列穿场";
+                case EncounterKind.VerticalColumn: return "四机纵列";
+                case EncounterKind.ParallelLanes: return "上下双列";
+                default: return "快慢机穿场";
             }
         }
 
@@ -123,10 +126,10 @@ namespace Core.SystemModules
         {
             switch (kind)
             {
-                case EncounterKind.DepthFormation: return "对齐前后敌机，利用穿透弹道";
-                case EncounterKind.DenseCluster: return "集群将在入场后散开，把握导弹或充能齐射窗口";
-                case EncounterKind.StaggeredCrossfire: return "上下交替开火，观察炮口预警再换线";
-                default: return "后方领机与前排护卫：选择集火目标或先清护卫回能";
+                case EncounterKind.LaneStream: return "敌机沿同一高度连续向左穿场，提前对齐弹道";
+                case EncounterKind.VerticalColumn: return "四机保持纵列穿场，提前选择高度和攻击目标";
+                case EncounterKind.ParallelLanes: return "上下两列持续穿场，留意两条航线和左侧来弹";
+                default: return "慢机持续向左推进，随后快机入场；留意屏幕两侧的敌机";
             }
         }
     }
